@@ -1,0 +1,21 @@
+{
+  "name": "numpower/tensor",
+  "scripts": {
+    "phpstan": "vendor/bin/phpstan -c phpstan.neon"
+  },
+  "autoload": {
+    "psr-4": {
+      "NumPower\\Tensor\\": "src/"
+    }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "1.10.32",
+    "squizlabs/php_codesniffer": "3.7.2"
+  },
+  "require": {
+    "ext-numpower": "*",
+    "ext-gd": "*"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
