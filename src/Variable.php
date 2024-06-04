@@ -26,6 +26,19 @@ final class Variable extends Operand
     }
 
     /**
+     * Return a PHP value.
+     *
+     * @return array|float
+     */
+    public function getValue(): array|float
+    {
+        if (is_a($this->getArray(), \NDArray::class)) {
+            return $this->getArray()->toArray();
+        }
+        return $this->getArray();
+    }
+
+    /**
      * @param float $min
      * @param float $max
      * @param string $name
@@ -36,7 +49,7 @@ final class Variable extends Operand
     {
         [$input_min, $input_max] = ValidationUtils::validateOperationInputs($name, $min, $max);
         $output = new Variable(nd::clip($this->getArray(), $min, $max));
-        $output->registerOperation("clip", [$this, $input_min, $input_max])->setName($name);
+        $output->registerOperation("clip", [$this, $input_min, $input_max])->setName($name, $this);
         return $output;
     }
 
@@ -45,21 +58,21 @@ final class Variable extends Operand
     public function trunc(string $name = ''): Variable
     {
         $new_var = new Variable(nd::trunc($this->getArray()));
-        $new_var->registerOperation("trunc", [$this])->setName($name);
+        $new_var->registerOperation("trunc", [$this])->setName($name, $this);
         return $new_var;
     }
 
     public function floor(string $name = ''): Variable
     {
         $new_var = new Variable(nd::floor($this->getArray()));
-        $new_var->registerOperation("floor", [$this])->setName($name);
+        $new_var->registerOperation("floor", [$this])->setName($name, $this);
         return $new_var;
     }
 
     public function ceil(string $name = ''): Variable
     {
         $new_var = new Variable(nd::ceil($this->getArray()));
-        $new_var->registerOperation("ceil", [$this])->setName($name);
+        $new_var->registerOperation("ceil", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -80,7 +93,7 @@ final class Variable extends Operand
             }
         }
         $new_var = new Variable($value);
-        $new_var->registerOperation("sum", [$this, $keepdim])->setName($name);
+        $new_var->registerOperation("sum", [$this, $keepdim])->setName($name, $this);
         return $new_var;
     }
 
@@ -103,7 +116,7 @@ final class Variable extends Operand
             }
         }
         $new_var = new Variable($value);
-        $new_var->registerOperation("sum_axis", [$this, $axis, $keepdim])->setName($name);
+        $new_var->registerOperation("sum_axis", [$this, $axis, $keepdim])->setName($name, $this);
         return $new_var;
     }
 
@@ -115,7 +128,7 @@ final class Variable extends Operand
     public function rsqrt(string $name = ''): Variable
     {
         $new_var = new Variable(nd::rsqrt($this->getArray()));
-        $new_var->registerOperation("rsqrt", [$this])->setName($name);
+        $new_var->registerOperation("rsqrt", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -127,7 +140,7 @@ final class Variable extends Operand
     public function mean(string $name = ''): Variable
     {
         $new_var = new Variable(nd::average($this->getArray()));
-        $new_var->registerOperation("mean", [$this])->setName($name);
+        $new_var->registerOperation("mean", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -136,10 +149,10 @@ final class Variable extends Operand
      * @return Variable
      * @throws Exception
      */
-    public function abs(string $name): Variable
+    public function abs(string $name = ''): Variable
     {
         $new_var = new Variable(nd::abs($this->getArray()));
-        $new_var->registerOperation("abs", [$this])->setName($name);
+        $new_var->registerOperation("abs", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -151,7 +164,7 @@ final class Variable extends Operand
     public function cond(string $name = ''): Variable
     {
         $new_var = new Variable(nd::cond($this->getArray()));
-        $new_var->registerOperation("cond", [$this])->setName($name);
+        $new_var->registerOperation("cond", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -163,7 +176,7 @@ final class Variable extends Operand
     public function svd(string $name = ''): Variable
     {
         $new_var = new Variable(nd::svd($this->getArray()));
-        $new_var->registerOperation("svd", [$this])->setName($name);
+        $new_var->registerOperation("svd", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -175,7 +188,7 @@ final class Variable extends Operand
     public function norm(string $name = ''): Variable
     {
         $new_var = new Variable(nd::norm($this->getArray()));
-        $new_var->registerOperation("norm", [$this])->setName($name);
+        $new_var->registerOperation("norm", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -189,7 +202,7 @@ final class Variable extends Operand
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         $new_var = new Variable(nd::arctan2($this->getArray(), $input->getArray()));
-        $new_var->registerOperation("arctan2", [$this, $input])->setName($name);
+        $new_var->registerOperation("arctan2", [$this, $input])->setName($name, $this);
         return $new_var;
     }
 
@@ -201,7 +214,7 @@ final class Variable extends Operand
     public function sqrt(string $name = ''): Variable
     {
         $new_var = new Variable(nd::sqrt($this->getArray()));
-        $new_var->registerOperation("sqrt", [$this])->setName($name);
+        $new_var->registerOperation("sqrt", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -213,7 +226,7 @@ final class Variable extends Operand
     public function sinc(string $name = ''): Variable
     {
         $new_var = new Variable(nd::sinc($this->getArray()));
-        $new_var->registerOperation("sinc", [$this])->setName($name);
+        $new_var->registerOperation("sinc", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -226,7 +239,7 @@ final class Variable extends Operand
     public function reshape(array $shape, string $name = ''): Variable
     {
         $new_var = new Variable(nd::reshape($this->getArray(), $shape));
-        $new_var->registerOperation("reshape", [$this, $shape])->setName($name);
+        $new_var->registerOperation("reshape", [$this, $shape])->setName($name, $this);
         return $new_var;
     }
 
@@ -239,28 +252,7 @@ final class Variable extends Operand
     {
         $ones = new Variable(1);
         $output = $ones->divide($this->multiply(-1, name: $name)->exp(name: $name)->add($ones, name: $name), name: $name);
-        $output->setName($name);
-        return $output;
-    }
-
-    /**
-     * @param string $name
-     * @return Variable
-     * @throws Exception
-     */
-    public function softmax(string $name = ''): Variable
-    {
-        $value = $this->getArray();
-        $exps = nd::exp($value);
-        $sum_exp = nd::sum($exps, 1);
-        if (count($sum_exp->shape()) == 1 && count($sum_exp) == 1) {
-            $sum_exp = $sum_exp[0] * nd::ones($sum_exp->shape());
-        }
-        if (count($sum_exp->shape()) == 1 && count($sum_exp) == 2) {
-            $sum_exp = nd::reshape($sum_exp, [count($sum_exp), 1]);
-        }
-        $output = new Variable($exps / $sum_exp);
-        $output->registerOperation('softmax', [$this])->setName($name);
+        $output->setName($name, $this);
         return $output;
     }
 
@@ -270,5 +262,14 @@ final class Variable extends Operand
     public function __toString(): string
     {
         return $this->getArray();
+    }
+
+    /**
+     * @param nd|float $value
+     * @return void
+     */
+    public function setValue(\NDArray|float $value): void
+    {
+        $this->setArray($value);
     }
 }

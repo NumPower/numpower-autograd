@@ -24,7 +24,7 @@ trait LinearAlgebra
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Variable(nd::matmul($this->getArray(), $input->getArray()));
-        $output->registerOperation("matmul", [$this, $input])->setName($name);
+        $output->registerOperation("matmul", [$this, $input])->setName($name, $this);
         return $output;
     }
 

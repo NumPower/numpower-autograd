@@ -22,7 +22,7 @@ trait Arithmetics
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Variable(nd::add($this->getArray(), $input->getArray()));
         $output->registerOperation("add", [$this, $input]);
-        $output->setName($name);
+        $output->setName($name, $this);
         return $output;
     }
 
@@ -36,7 +36,7 @@ trait Arithmetics
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Variable(nd::divide($this->getArray(), $input->getArray()));
-        $output->registerOperation("divide", [$this, $value])->setName($name);
+        $output->registerOperation("divide", [$this, $value])->setName($name, $this);
         return $output;
     }
 
@@ -50,7 +50,7 @@ trait Arithmetics
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Variable(nd::multiply($this->getArray(), $input->getArray()));
-        $output->registerOperation("multiply", [$this, $input])->setName($name);
+        $output->registerOperation("multiply", [$this, $input])->setName($name, $this);
         return $output;
     }
 
@@ -64,7 +64,7 @@ trait Arithmetics
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $new_var = new Variable($this->getArray() ** $input->getArray());
-        $new_var->registerOperation("power", [$this, $input])->setName($name);
+        $new_var->registerOperation("power", [$this, $input])->setName($name, $this);
         return $new_var;
     }
 
@@ -78,7 +78,7 @@ trait Arithmetics
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         $new_var = new Variable(nd::mod($this->getArray(), $input->getArray()));
-        $new_var->registerOperation("mod", [$this, $input])->setName($name);
+        $new_var->registerOperation("mod", [$this, $input])->setName($name, $this);
         return $new_var;
     }
 
@@ -90,7 +90,7 @@ trait Arithmetics
     public function negative(string $name = ''): Variable
     {
         $new_var = new Variable(nd::negative($this->getArray()));
-        $new_var->registerOperation("negative", [$this])->setName($name);
+        $new_var->registerOperation("negative", [$this])->setName($name, $this);
         return $new_var;
     }
 
@@ -104,7 +104,7 @@ trait Arithmetics
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Variable(nd::subtract($this->getArray(), $input->getArray()));
-        $output->registerOperation("subtract", [$this, $input])->setName($name);
+        $output->registerOperation("subtract", [$this, $input])->setName($name, $this);
         return $output;
     }
 }

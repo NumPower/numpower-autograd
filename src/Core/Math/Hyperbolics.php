@@ -2,6 +2,7 @@
 
 namespace NumPower\Tensor\Core\Math;
 
+use \NDArray as nd;
 use Exception;
 use NumPower\Tensor\Variable;
 
@@ -44,7 +45,7 @@ trait Hyperbolics
     public function tanh(string $name = ''): Variable
     {
         $new_var = new Variable(nd::tanh($this->getArray()));
-        $new_var->registerOperation("tanh", [$this])->setName($name);
+        $new_var->registerOperation("tanh", [$this])->setName($name, $this);
         return $new_var;
     }
 

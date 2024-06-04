@@ -5,311 +5,270 @@ namespace NumPower\Tensor\Core\Tape;
 use NDArray as nd;
 use NumPower\Tensor\Variable;
 
+/**
+ * Core backward functions.
+ *
+ * Implements a static function named after all core operations to calculate
+ * partial derivatives.
+ */
 class BackwardOperation
 {
-    public static function add(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $b): void
+    public static function offsetGet(Variable $output, \NDArray|float $grad, Variable $self, int $offset): void
     {
-        $a->backward($grad, benchmark: $benchmark);
-        $b->backward($grad, benchmark: $benchmark);
-    }
+        $zeros = nd::zeros($self->getShape());
+        if (is_float($grad) || count($grad->shape()) < count($zeros->shape())) {
+            $zeros[$offset] = $grad;
+        } else if (count($grad->shape()) > count($zeros->shape())) {
+            $zeros[$offset] = nd::sum($grad);
+        }
 
-    public static function subtract(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $b): void
-    {
-        $a->backward($grad, benchmark: $benchmark);
-        $b->backward(-$grad, benchmark: $benchmark);
+        $self->diff($zeros);
     }
-
-    public static function multiply(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $b): void
+    public static function add(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
     {
-        $a->backward($grad * $b->getArray(), benchmark: $benchmark);
-        $b->backward($a->getArray() * $grad, benchmark: $benchmark);
+        $a->diff($grad);
+        $b->diff($grad);
     }
-
-    public static function matmul(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $b): void
+    public static function subtract(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
     {
-        $start = microtime(true);
+        $a->diff($grad);
+        $b->diff(-$grad);
+    }
+    public static function multiply(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+    {
+        $a->diff($grad * $b->getArray());
+        $b->diff($a->getArray() * $grad);
+    }
+    public static function matmul(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+    {
         $b_transpose = nd::transpose($b->getArray());
         $a_transpose = nd::transpose($a->getArray());
-        $stop = microtime(true);
-        if ($benchmark) {
-            echo "\n transpose: ". ($stop - $start);
-        }
-
-        $start = microtime(true);
         $dx_da = nd::matmul($grad, $b_transpose);
         $dx_db = nd::matmul($a_transpose, $grad);
-        $stop = microtime(true);
-        if ($benchmark) {
-            echo "\n matmul: ". ($stop - $start);
-        }
-        $a->backward($dx_da, benchmark: $benchmark);
-        $b->backward($dx_db, benchmark: $benchmark);
+        $a->diff($dx_da);
+        $b->diff($dx_db);
     }
-
-    public static function clip(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $min, Variable $max): void
+    public static function clip(Variable $output, \NDArray|float $grad, Variable $a, Variable $min, Variable $max): void
     {
         $greater = nd::greater_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $min->getArray());
         $less = nd::less_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $max->getArray());
-        $a->backward($grad * $greater * $less);
+        $a->diff($grad * $greater * $less);
     }
-
-    public static function conv2d(Variable $output, bool $benchmark,  \NDArray $grad, Variable $input, Variable $filters, array $strides): void
+    public static function conv2d(Variable $output, \NDArray|float $grad, Variable $input, Variable $filters, array $strides): void
     {
         [$dW, $dInput] = nd::dnn_conv2d_backward($input->getArray(), $grad, $filters->getArray());
-        $input->backward($dInput);
-        $filters->backward($dW);
+        $input->diff($dInput);
+        $filters->diff($dW);
     }
-
-    public static function matrix_rank(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $x): void
+    public static function matrix_rank(Variable $output, \NDArray|float $grad, Variable $x): void
     {
-        $x->backward(nd::zeros($x->getShape()));
+        $x->diff(nd::zeros($x->getShape()));
     }
-
-    public static function cond(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $x): void
+    public static function cond(Variable $output, \NDArray|float $grad, Variable $x): void
     {
-        $x->backward(nd::zeros($x->getShape()));
+        $x->diff(nd::zeros($x->getShape()));
     }
-
-    public static function softmax(Variable $output, bool $benchmark,  \NDArray $grad, Variable $x): void
+    public static function divide(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
     {
-        $new_grad_output = new Variable($output->grad() * $output->getArray());
-        $new_grad_output_sum = $new_grad_output->sum_axis(1, True);
-        $x->backward($new_grad_output->getArray() - $output->getArray() * $new_grad_output_sum->getArray());
+        $a->diff($grad / $b->getArray());
+        $b->diff(-$grad * $a->getArray() / $b->getArray() ** 2);
     }
-
-    public static function divide(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a, Variable $b): void
+    public static function exp(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / $b->getArray(), benchmark: $benchmark);
-        $b->backward(-$grad * $a->getArray() / $b->getArray() ** 2, benchmark: $benchmark);
+        $a->diff($grad * nd::exp($a->getArray()));
     }
-
-    public static function exp(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function exp2(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::exp($a->getArray()), benchmark: $benchmark);
+        $a->diff($grad * $output->getArray() * M_LN2);
     }
-
-    public static function exp2(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function expm1(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * $output->getArray() * M_LN2, benchmark: $benchmark);
+        $a->diff($grad * ($output->getArray() + 1));
     }
-
-    public static function expm1(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function mod(Variable $output, \NDArray|float $grad, Variable $x, Variable $y): void
     {
-        $a->backward($grad * ($output->getArray() + 1));
+        $x->diff($grad);
+        $y->diff(nd::zeros($grad->shape()));
     }
-
-    public static function mod(Variable $output, bool $benchmark,  \NDArray $grad, Variable $x, Variable $y): void
+    public static function trunc(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $x->backward($grad);
-        $y->backward(nd::zeros($grad->shape()));
+        $a->diff(nd::zeros($grad->shape()));
     }
-
-
-    public static function trunc(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function floor(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward(nd::zeros($grad->shape()));
+        $a->diff(nd::zeros($grad->shape()));
     }
-
-    public static function floor(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function sin(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward(nd::zeros($grad->shape()));
+        $a->diff($grad * nd::cos($a->getArray()));
     }
-
-
-    public static function sin(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function sinh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::cos($a->getArray()));
+        $a->diff($grad * nd::cosh($a->getArray()));
     }
-
-    public static function sinh(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function ceil(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::cosh($a->getArray()));
+        $a->diff(nd::zeros($grad->shape()));
     }
-
-    public static function ceil(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
-    {
-        $a->backward(nd::zeros($grad->shape()));
-    }
-
-    public static function sinc(Variable $output, bool $benchmark,  \NDArray $grad, Variable $a): void
+    public static function sinc(Variable $output, \NDArray|float $grad, Variable $a): void
     {
         $ppi = $a->getArray() * M_PI;
         $squaredPi = $a->getArray() * $a->getArray() * M_PI;
-        $a->backward($grad * (($ppi * nd::cos($ppi) - nd::sin($ppi)) / ($squaredPi)));
+        $a->diff($grad * (($ppi * nd::cos($ppi) - nd::sin($ppi)) / ($squaredPi)));
     }
-
-    public static function mean(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function mean(Variable $output, \NDArray|float $grad, Variable $a): void
     {
         $prod = nd::prod(nd::array($a->getArray()->shape()));
         $out = $grad * nd::ones($a->getArray()->shape()) / $prod;
         if ($a->getArray()->isGPU()) {
             $out = $out->gpu();
         }
-        $a->backward($out, benchmark: $benchmark);
+        $a->diff($out);
     }
-
-    public static function abs(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function abs(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::sign($a->getArray()));
+        $a->diff($grad * nd::sign($a->getArray()));
     }
-
-    public static function acos(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function acos(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * -(nd::rsqrt(-$a->getArray() * $a->getArray() + 1)));
+        $a->diff($grad * -(nd::rsqrt(-$a->getArray() * $a->getArray() + 1)));
     }
-
-    public static function cosh(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function cosh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::sinh($a->getArray()));
+        $a->diff($grad * nd::sinh($a->getArray()));
     }
-
-    public static function tan(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function tan(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * (1 + ($output->getArray() ** 2)));
+        $a->diff($grad * (1 + ($output->getArray() ** 2)));
     }
-
-    public static function radians(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function radians(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * 0.01745329251994329576923690768488612713);
+        $a->diff($grad * 0.01745329251994329576923690768488612713);
     }
-
-    public static function arccosh(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function arccosh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::rsqrt(($a->getArray() ** 2) - 1));
+        $a->diff($grad * nd::rsqrt(($a->getArray() ** 2) - 1));
     }
-
-    public static function arctan(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function arctan(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / ($a->getArray() * $a->getArray() + 1));
+        $a->diff($grad / ($a->getArray() * $a->getArray() + 1));
     }
-
-    public static function arcsin(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function arcsin(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::rsqrt(-$a->getArray() * $a->getArray() + 1));
+        $a->diff($grad * nd::rsqrt(-$a->getArray() * $a->getArray() + 1));
     }
-
-    public static function arctanh(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function arctanh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * 1 / (1 - ($a->getArray() ** 2)));
+        $a->diff($grad * 1 / (1 - ($a->getArray() ** 2)));
     }
-
-    public static function arcsinh(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function arcsinh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * nd::rsqrt(($a->getArray() ** 2) + 1));
+        $a->diff($grad * nd::rsqrt(($a->getArray() ** 2) + 1));
     }
-
-    public static function cos(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function cos(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * -nd::sin($a->getArray()));
+        $a->diff($grad * -nd::sin($a->getArray()));
     }
-
-    public static function rsqrt(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function rsqrt(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward(-0.5 * $grad * ($output->getArray() ** 3));
+        $a->diff(-0.5 * $grad * ($output->getArray() ** 3));
     }
-
-    public static function reshape(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, array $shape): void
+    public static function reshape(Variable $output, \NDArray|float $grad, Variable $a, array $shape): void
     {
-        $a->backward(nd::reshape($grad, $a->getArray()->shape()));
+        $a->diff(nd::reshape($grad, $a->getArray()->shape()));
     }
-
-    public static function log(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function log(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / $a->getArray());
+        $a->diff($grad / $a->getArray());
     }
-
-    public static function log1p(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function log1p(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / ($a->getArray() + 1));
+        $a->diff($grad / ($a->getArray() + 1));
     }
-
-    public static function norm(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function norm(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($a->getArray() / $output->getArray());
+        $a->diff($a->getArray() / $output->getArray());
     }
-
-    public static function log2(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function log2(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / ($a->getArray() * 0.6931471805599453));
+        $a->diff($grad / ($a->getArray() * 0.6931471805599453));
     }
-
-    public static function negative(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function negative(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward(-$grad);
+        $a->diff(-$grad);
     }
-
-    public static function det(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function det(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward(nd::transpose(nd::inv($a->getArray())) * $output->getArray());
+        $a->diff(nd::transpose(nd::inv($a->getArray())) * $output->getArray());
     }
-
-    public static function log10(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function log10(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / ($a->getArray() * 2.3025850929940456));
+        $a->diff($grad / ($a->getArray() * 2.3025850929940456));
     }
-
-    public static function outer(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $x, Variable $y): void
+    public static function outer(Variable $output, \NDArray|float $grad, Variable $x, Variable $y): void
     {
-        $x->backward(nd::sum($y->getArray()) * nd::ones($y->getShape()));
-        $y->backward(nd::sum($x->getArray()) * nd::ones($x->getShape()));
+        $x->diff(nd::sum($y->getArray()) * nd::ones($y->getShape()));
+        $y->diff(nd::sum($x->getArray()) * nd::ones($x->getShape()));
     }
-
-    public static function binary_cross_entropy(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $x, Variable $y, float $epsilon): void
+    public static function binary_cross_entropy(Variable $output, \NDArray|float $grad, Variable $x, Variable $y, float $epsilon, string $reduction): void
     {
-        $result = $grad * ($x->getArray() - $y->getArray()) / nd::clip($x->getArray() * (1 - $x->getArray()), $epsilon, PHP_FLOAT_MAX);
-        $x->backward($result);
+        switch($reduction) {
+            case 'mean':
+                $result = $grad * ($x->getArray() - $y->getArray()) / nd::clip($x->getArray() * (1 - $x->getArray()), $epsilon, PHP_FLOAT_MAX);
+                $result = $result / $x->numElements();
+                $grad_target = -(nd::log($x->getArray() / (1 - $x->getArray())));
+                $x->diff($result);
+                $y->diff($grad_target);
+                break;
+        }
     }
-
-    public static function sqrt(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function sqrt(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad / (2 * $output->getArray()));
+        $a->diff($grad / (2 * $output->getArray()));
     }
-
-    public static function tanh(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function tanh(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * (1 - $output->getArray() ** 2));
+        $a->diff($grad * (1 - $output->getArray() ** 2));
     }
-
-    public static function sum(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, bool $keepDim): void
+    public static function sum(Variable $output, \NDArray|float $grad, Variable $a, bool $keepDim): void
     {
-        $a->backward(nd::ones($a->getArray()->shape()) * $grad);
+        if ($a->isScalar()) {
+            $a->diff($grad);
+            return;
+        }
+        $a->diff(nd::ones($a->getArray()->shape()) * $grad);
     }
-
-    public static function sum_axis(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, int $axis, bool $keepDim): void
+    public static function sum_axis(Variable $output, \NDArray|float $grad, Variable $a, int $axis, bool $keepDim): void
     {
         $ones = nd::ones($a->getArray()->shape());
         if ($a->getArray()->isGPU()) {
             $ones = $ones->gpu();
         }
-        $a->backward($ones * $grad);
+        $a->diff($ones * $grad);
     }
-
-    public static function cce(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $true, Variable $pred, float $epsilon): void
+    public static function cce(Variable $output, \NDArray|float $grad, Variable $true, Variable $pred, float $epsilon): void
     {
         $pred_batch = nd::clip($pred->getArray(), $epsilon, 1 - $epsilon);
         $dL_dy_pred = -($true->getArray() / $pred_batch);
-        $dL_dy_true = - nd::log($pred->getArray());
+        $dL_dy_true = -nd::log($pred->getArray());
 
         $dL_dy_pred = $dL_dy_pred / count($true->getShape());
-        $pred->backward($grad * $dL_dy_true);
-        $true->backward($grad * $dL_dy_pred);
+        $pred->diff($grad * $dL_dy_true);
+        $true->diff($grad * $dL_dy_pred);
     }
-
-    public static function relu(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a): void
+    public static function relu(Variable $output, \NDArray|float $grad, Variable $a): void
     {
-        $a->backward($grad * (nd::greater($a->getArray(), 0)));
+        $a->diff($grad * (nd::greater($a->getArray(), 0)));
     }
-
-    public static function selu(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, float $alpha, float $scale): void
+    public static function selu(Variable $output, \NDArray|float $grad, Variable $a, float $alpha, float $scale): void
     {
         $non_zero = nd::greater($a->getArray(), 0);
         $zeros = nd::less_equal($a->getArray(), 0);
         $zeros = $zeros * ($alpha * (nd::exp($a->getArray())));
 
-        $a->backward($grad * ($scale * ($non_zero + $zeros)));
+        $a->diff($grad * ($scale * ($non_zero + $zeros)));
     }
-
-    public static function celu(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, float $alpha): void
+    public static function celu(Variable $output, \NDArray|float $grad, Variable $a, float $alpha): void
     {
         $scale = 1.0;
         $negcoef = $alpha * $scale;
@@ -320,18 +279,16 @@ class BackwardOperation
         $greater = nd::greater($a->getArray(), 0);
         $cond1 = $zeros * ($output->grad() * $negiptcoef * $negcoef * nd::exp($a->getArray()) * $negiptcoef);
         $cond2 = $greater * ($output->grad() * $poscoef);
-        $a->backward($cond1 + $cond2);
+        $a->diff($cond1 + $cond2);
     }
-
-    public static function power(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, Variable $b): void
+    public static function power(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
     {
-        $a->backward($grad * $b->getArray() * $a->getArray() ** ($b->getArray() - 1), benchmark: $benchmark);
-        $b->backward($grad * $a->getArray() ** $b->getArray() * nd::log($a->getArray()), benchmark: $benchmark);
+        $a->diff($grad * $b->getArray() * $a->getArray() ** ($b->getArray() - 1));
+        $b->diff($grad * $a->getArray() ** $b->getArray() * nd::log($a->getArray()));
     }
-
-    public static function dot(Variable $output, bool $benchmark,  \NDArray|float $grad, Variable $a, Variable $b): void
+    public static function dot(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
     {
-        $a->backward($grad * $b->getArray());
-        $b->backward($grad * $a->getArray());
+        $a->diff($grad * $b->getArray());
+        $b->diff($grad * $a->getArray());
     }
 }

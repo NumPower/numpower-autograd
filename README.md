@@ -18,8 +18,8 @@ By integrating backpropagation and GPU support, NumPower Autograd provides high-
 
 ## Requirements
 
-- NumPower Extension > 0.5.x (https://github.com/NumPower/numpower)
-- PHP 8.3
+- NumPower Extension >= 0.5.x (https://github.com/NumPower/numpower)
+- PHP >= 8.3
 - Composer
 
 ## Installing
@@ -68,25 +68,6 @@ dc_Db:
 This code demonstrates a simple example of automatic differentiation using variables and operations. It computes 
 the gradients of the result of a computation (**$c**) with respect to its inputs (**$a** and **$b**).
 
-## Creating custom operations
-Sometimes you want to create specific operations that are not natively implemented in the library. In this case you can use the `operation` method to specify an operation and a backward propagation function for that operation.
-
-``` php
-// Custom operation function
-function myop(OperationContext $context, ...$args): Variable
-{
-   $context->setName('myop');
-   // Custom operation backward function
-   $context->setBackwardFunction(
-       function(Variable $output, \NDArray $grad, Variable $a, Variable $b) {
-            $a->backward($grad * $a->getArray());
-       }
-   );
-}
-
-$a->operation(myop, $b);
-```
-
 ## Using a video card with CUDA support
 If you have compiled the NumPower extension with GPU utilization 
 capabilities, you can perform operations on the GPU by allocating 
@@ -116,7 +97,7 @@ the `NumPower\Tensor\NeuralNetwork` module.
 
 ```php 
 use NDArray as nd;
-use NumPower\Tensor\Variable
+use NumPower\Tensor\Variable;
 use NumPower\Tensor\NeuralNetwork as nn;
 use NumPower\Tensor\NeuralNetwork\Losses as loss;
 
@@ -206,3 +187,39 @@ and see step-by-step instructions on how to build this model.
 
 The above model can be used for several different classification problems. 
 For simplicity, let's see if our model can solve the XOR problem.
+
+```php 
+$num_epochs = 200;
+$x = new Variable(nd::array([[0, 0], [1, 0], [1, 1], [0, 1]]), name: 'x');
+$y = new Variable(nd::array([[1], [0], [1], [0]]), name: 'y');
+
+$model = new SimpleModel();
+
+$start = microtime(true);
+for ($current_epoch = 0; $current_epoch < $num_epochs; $current_epoch++) {
+    // Forward Pass
+    [$prediction, $loss] = $model->forward($x, $y);
+    // Backward Pass
+    $model->backward($loss);
+    echo "\n Epoch ($current_epoch): ".$loss->getArray();
+}
+```
+
+## Creating custom operations
+Sometimes you want to create specific operations that are not natively implemented in the library. In this case you can use the `operation` method to specify an operation and a backward propagation function for that operation.
+
+``` php
+// Custom operation function
+function myop(OperationContext $context, ...$args): Variable
+{
+   $context->setName('myop');
+   // Custom operation backward function
+   $context->setBackwardFunction(
+       function(Variable $output, \NDArray $grad, Variable $a, Variable $b) {
+            $a->backward($grad * $a->getArray());
+       }
+   );
+}
+
+$a->operation(myop, $b);
+```
