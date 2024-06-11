@@ -4,27 +4,27 @@ namespace NumPower\Tensor\Utils;
 
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 
 class ValidationUtils
 {
     /**
-     * @throws Exception
-     * @return Variable[]
+     * @return Tensor[]
+     *@throws Exception
      */
     public static function validateOperationInputs($name = '', ...$args): array
     {
         $outputs = [];
         foreach ($args as $arg) {
             if (is_array($arg) || is_a($arg, "\gdImage") || is_int($arg) || is_float($arg)) {
-                $outputs[] = new Variable(nd::array($arg), name: $arg);
+                $outputs[] = new Tensor(nd::array($arg), name: $arg);
                 continue;
             }
             if (is_a($arg, "\NDArray")) {
-                $outputs[] = new Variable($arg, name: $name);
+                $outputs[] = new Tensor($arg, name: $name);
                 continue;
             }
-            if (is_a($arg, Variable::class)) {
+            if (is_a($arg, Tensor::class)) {
                 $outputs[] = $arg;
                 continue;
             }

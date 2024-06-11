@@ -2,8 +2,9 @@
 
 namespace NumPower\Tensor\Core\Tape;
 
+use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 
 /**
  * Core backward functions.
@@ -13,7 +14,7 @@ use NumPower\Tensor\Variable;
  */
 class BackwardOperation
 {
-    public static function offsetGet(Variable $output, \NDArray|float $grad, Variable $self, int $offset): void
+    public static function offsetGet(Tensor $output, \NDArray|float $grad, Tensor $self, int $offset): void
     {
         $zeros = nd::zeros($self->getShape());
         if (is_float($grad) || count($grad->shape()) < count($zeros->shape())) {
@@ -24,22 +25,58 @@ class BackwardOperation
 
         $self->diff($zeros);
     }
-    public static function add(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function add(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad);
         $b->diff($grad);
     }
-    public static function subtract(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function subtract(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad);
         $b->diff(-$grad);
     }
-    public static function multiply(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function multiply(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad * $b->getArray());
         $b->diff($a->getArray() * $grad);
     }
-    public static function matmul(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function matmul(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $b_transpose = nd::transpose($b->getArray());
         $a_transpose = nd::transpose($a->getArray());
@@ -48,75 +85,193 @@ class BackwardOperation
         $a->diff($dx_da);
         $b->diff($dx_db);
     }
-    public static function clip(Variable $output, \NDArray|float $grad, Variable $a, Variable $min, Variable $max): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $min
+     * @param Tensor $max
+     * @return void
+     * @throws Exception
+     */
+    public static function clip(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $min, Tensor $max): void
     {
         $greater = nd::greater_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $min->getArray());
         $less = nd::less_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $max->getArray());
         $a->diff($grad * $greater * $less);
     }
-    public static function conv2d(Variable $output, \NDArray|float $grad, Variable $input, Variable $filters, array $strides): void
-    {
-        [$dW, $dInput] = nd::dnn_conv2d_backward($input->getArray(), $grad, $filters->getArray());
-        $input->diff($dInput);
-        $filters->diff($dW);
-    }
-    public static function matrix_rank(Variable $output, \NDArray|float $grad, Variable $x): void
-    {
-        $x->diff(nd::zeros($x->getShape()));
-    }
-    public static function cond(Variable $output, \NDArray|float $grad, Variable $x): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $x
+     * @return void
+     * @throws Exception
+     */
+    public static function matrix_rank(Tensor $output, \NDArray|float $grad, Tensor $x): void
     {
         $x->diff(nd::zeros($x->getShape()));
     }
-    public static function divide(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $x
+     * @return void
+     * @throws Exception
+     */
+    public static function cond(Tensor $output, \NDArray|float $grad, Tensor $x): void
+    {
+        $x->diff(nd::zeros($x->getShape()));
+    }
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function divide(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad / $b->getArray());
         $b->diff(-$grad * $a->getArray() / $b->getArray() ** 2);
     }
-    public static function exp(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function exp(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::exp($a->getArray()));
     }
-    public static function exp2(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function exp2(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * $output->getArray() * M_LN2);
     }
-    public static function expm1(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function expm1(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * ($output->getArray() + 1));
     }
-    public static function mod(Variable $output, \NDArray|float $grad, Variable $x, Variable $y): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $x
+     * @param Tensor $y
+     * @return void
+     * @throws Exception
+     */
+    public static function mod(Tensor $output, \NDArray|float $grad, Tensor $x, Tensor $y): void
     {
         $x->diff($grad);
         $y->diff(nd::zeros($grad->shape()));
     }
-    public static function trunc(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function trunc(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(nd::zeros($grad->shape()));
     }
-    public static function floor(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function floor(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(nd::zeros($grad->shape()));
     }
-    public static function sin(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function sin(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::cos($a->getArray()));
     }
-    public static function sinh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function sinh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::cosh($a->getArray()));
     }
-    public static function ceil(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function ceil(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(nd::zeros($grad->shape()));
     }
-    public static function sinc(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function sinc(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $ppi = $a->getArray() * M_PI;
         $squaredPi = $a->getArray() * $a->getArray() * M_PI;
         $a->diff($grad * (($ppi * nd::cos($ppi) - nd::sin($ppi)) / ($squaredPi)));
     }
-    public static function mean(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function mean(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $prod = nd::prod(nd::array($a->getArray()->shape()));
         $out = $grad * nd::ones($a->getArray()->shape()) / $prod;
@@ -125,92 +280,273 @@ class BackwardOperation
         }
         $a->diff($out);
     }
-    public static function abs(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function abs(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::sign($a->getArray()));
     }
-    public static function acos(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function acos(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * -(nd::rsqrt(-$a->getArray() * $a->getArray() + 1)));
     }
-    public static function cosh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function cosh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::sinh($a->getArray()));
     }
-    public static function tan(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function tan(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * (1 + ($output->getArray() ** 2)));
     }
-    public static function radians(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function radians(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * 0.01745329251994329576923690768488612713);
     }
-    public static function arccosh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function arccosh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::rsqrt(($a->getArray() ** 2) - 1));
     }
-    public static function arctan(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function arctan(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / ($a->getArray() * $a->getArray() + 1));
     }
-    public static function arcsin(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function arcsin(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::rsqrt(-$a->getArray() * $a->getArray() + 1));
     }
-    public static function arctanh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function arctanh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * 1 / (1 - ($a->getArray() ** 2)));
     }
-    public static function arcsinh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function arcsinh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * nd::rsqrt(($a->getArray() ** 2) + 1));
     }
-    public static function cos(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function cos(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * -nd::sin($a->getArray()));
     }
-    public static function rsqrt(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function rsqrt(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(-0.5 * $grad * ($output->getArray() ** 3));
     }
-    public static function reshape(Variable $output, \NDArray|float $grad, Variable $a, array $shape): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param array $shape
+     * @return void
+     * @throws Exception
+     */
+    public static function reshape(Tensor $output, \NDArray|float $grad, Tensor $a, array $shape): void
     {
         $a->diff(nd::reshape($grad, $a->getArray()->shape()));
     }
-    public static function log(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function log(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / $a->getArray());
     }
-    public static function log1p(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function log1p(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / ($a->getArray() + 1));
     }
-    public static function norm(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function norm(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($a->getArray() / $output->getArray());
     }
-    public static function log2(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function log2(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / ($a->getArray() * 0.6931471805599453));
     }
-    public static function negative(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function negative(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(-$grad);
     }
-    public static function det(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function det(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff(nd::transpose(nd::inv($a->getArray())) * $output->getArray());
     }
-    public static function log10(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function log10(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / ($a->getArray() * 2.3025850929940456));
     }
-    public static function outer(Variable $output, \NDArray|float $grad, Variable $x, Variable $y): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $x
+     * @param Tensor $y
+     * @return void
+     * @throws Exception
+     */
+    public static function outer(Tensor $output, \NDArray|float $grad, Tensor $x, Tensor $y): void
     {
         $x->diff(nd::sum($y->getArray()) * nd::ones($y->getShape()));
         $y->diff(nd::sum($x->getArray()) * nd::ones($x->getShape()));
     }
-    public static function binary_cross_entropy(Variable $output, \NDArray|float $grad, Variable $x, Variable $y, float $epsilon, string $reduction): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $x
+     * @param Tensor $y
+     * @param float $epsilon
+     * @param string $reduction
+     * @return void
+     * @throws Exception
+     */
+    public static function binary_cross_entropy(Tensor $output, \NDArray|float $grad, Tensor $x, Tensor $y, float $epsilon, string $reduction): void
     {
         switch($reduction) {
             case 'mean':
@@ -222,15 +558,40 @@ class BackwardOperation
                 break;
         }
     }
-    public static function sqrt(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function sqrt(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad / (2 * $output->getArray()));
     }
-    public static function tanh(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function tanh(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
         $a->diff($grad * (1 - $output->getArray() ** 2));
     }
-    public static function sum(Variable $output, \NDArray|float $grad, Variable $a, bool $keepDim): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param bool $keepDim
+     * @return void
+     * @throws Exception
+     */
+    public static function sum(Tensor $output, \NDArray|float $grad, Tensor $a, bool $keepDim): void
     {
         if ($a->isScalar()) {
             $a->diff($grad);
@@ -238,7 +599,17 @@ class BackwardOperation
         }
         $a->diff(nd::ones($a->getArray()->shape()) * $grad);
     }
-    public static function sum_axis(Variable $output, \NDArray|float $grad, Variable $a, int $axis, bool $keepDim): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param int $axis
+     * @param bool $keepDim
+     * @return void
+     * @throws Exception
+     */
+    public static function sum_axis(Tensor $output, \NDArray|float $grad, Tensor $a, int $axis, bool $keepDim): void
     {
         $ones = nd::ones($a->getArray()->shape());
         if ($a->getArray()->isGPU()) {
@@ -246,7 +617,17 @@ class BackwardOperation
         }
         $a->diff($ones * $grad);
     }
-    public static function cce(Variable $output, \NDArray|float $grad, Variable $true, Variable $pred, float $epsilon): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $true
+     * @param Tensor $pred
+     * @param float $epsilon
+     * @return void
+     * @throws Exception
+     */
+    public static function cce(Tensor $output, \NDArray|float $grad, Tensor $true, Tensor $pred, float $epsilon): void
     {
         $pred_batch = nd::clip($pred->getArray(), $epsilon, 1 - $epsilon);
         $dL_dy_pred = -($true->getArray() / $pred_batch);
@@ -256,11 +637,29 @@ class BackwardOperation
         $pred->diff($grad * $dL_dy_true);
         $true->diff($grad * $dL_dy_pred);
     }
-    public static function relu(Variable $output, \NDArray|float $grad, Variable $a): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @return void
+     * @throws Exception
+     */
+    public static function relu(Tensor $output, \NDArray|float $grad, Tensor $a): void
     {
-        $a->diff($grad * (nd::greater($a->getArray(), 0)));
+        $a->diff($grad * (1 * nd::greater($a->getArray(), 0)));
     }
-    public static function selu(Variable $output, \NDArray|float $grad, Variable $a, float $alpha, float $scale): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param float $alpha
+     * @param float $scale
+     * @return void
+     * @throws Exception
+     */
+    public static function selu(Tensor $output, \NDArray|float $grad, Tensor $a, float $alpha, float $scale): void
     {
         $non_zero = nd::greater($a->getArray(), 0);
         $zeros = nd::less_equal($a->getArray(), 0);
@@ -268,7 +667,16 @@ class BackwardOperation
 
         $a->diff($grad * ($scale * ($non_zero + $zeros)));
     }
-    public static function celu(Variable $output, \NDArray|float $grad, Variable $a, float $alpha): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param float $alpha
+     * @return void
+     * @throws Exception
+     */
+    public static function celu(Tensor $output, \NDArray|float $grad, Tensor $a, float $alpha): void
     {
         $scale = 1.0;
         $negcoef = $alpha * $scale;
@@ -281,12 +689,30 @@ class BackwardOperation
         $cond2 = $greater * ($output->grad() * $poscoef);
         $a->diff($cond1 + $cond2);
     }
-    public static function power(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function power(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad * $b->getArray() * $a->getArray() ** ($b->getArray() - 1));
         $b->diff($grad * $a->getArray() ** $b->getArray() * nd::log($a->getArray()));
     }
-    public static function dot(Variable $output, \NDArray|float $grad, Variable $a, Variable $b): void
+
+    /**
+     * @param Tensor $output
+     * @param nd|float $grad
+     * @param Tensor $a
+     * @param Tensor $b
+     * @return void
+     * @throws Exception
+     */
+    public static function dot(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $b): void
     {
         $a->diff($grad * $b->getArray());
         $b->diff($grad * $a->getArray());

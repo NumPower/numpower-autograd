@@ -5,7 +5,7 @@ namespace NumPower\Tensor\Core\Tape;
 use Exception;
 use NDArray as nd;
 use NumPower\Tensor\Core\OperationContext;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 
 class GradientTape
 {
@@ -71,12 +71,12 @@ class GradientTape
     }
 
     /**
-     * @param Variable $tensor
+     * @param Tensor $tensor
      * @param nd|float|int $grad
      * @return void
      * @throws Exception
      */
-    public function diff(Variable $tensor, \NDArray|float|int $grad): void
+    public function diff(Tensor $tensor, \NDArray|float|int $grad): void
     {
         if (isset($this->context)) {
             $this->getContext()->getBackwardFunction()($tensor, $grad, ...$this->getArgs());
@@ -89,15 +89,15 @@ class GradientTape
     }
 
     /**
-     * @param Variable $tensor
+     * @param Tensor $tensor
      * @param bool $withHeader
      * @return void
      */
-    public function backwardPrint(Variable $tensor, bool $withHeader = true): void
+    public function backwardPrint(Tensor $tensor, bool $withHeader = true): void
     {
         $names = [];
         foreach ($this->getArgs() as $arg) {
-            if (is_a($arg, Variable::class)) {
+            if (is_a($arg, Tensor::class)) {
                 $name = $arg->getName();
                 if ($name == '') {
                     $name = '_nd_';
@@ -117,7 +117,7 @@ class GradientTape
 
         printf("%-{$operationWidth}s %-{$argsWidth}s\n", $this->getName(), $argsString);
         foreach ($this->getArgs() as $arg) {
-            if (is_a($arg, Variable::class)) {
+            if (is_a($arg, Tensor::class)) {
                 $tape = $arg->getTape();
                 if ($tape == null) {
                     continue;

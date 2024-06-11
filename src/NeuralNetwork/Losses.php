@@ -4,7 +4,7 @@ namespace NumPower\Tensor\NeuralNetwork;
 
 use Exception;
 use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 use NDArray as nd;
 
 class Losses
@@ -14,13 +14,13 @@ class Losses
      * @param int|float|array|object $y
      * @param string|null $reduction
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public static function MeanSquaredError(int|float|array|object $x,
                                             int|float|array|object $y,
                                             ?string                $reduction = 'mean',
-                                            string                 $name = ''): Variable
+                                            string                 $name = ''): Tensor
     {
         [$x, $y] = ValidationUtils::validateOperationInputs($name, $x, $y);
         $loss = $x->subtract($y, name: $name)->power(2, name: $name);
@@ -36,13 +36,13 @@ class Losses
      * @param int|float|array|object $y
      * @param string|null $reduction
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public static function MeanAbsoluteError(int|float|array|object $x,
                                              int|float|array|object $y,
                                              ?string                $reduction = 'mean',
-                                             string                 $name = ''): Variable
+                                             string                 $name = ''): Tensor
     {
         [$x, $y] = ValidationUtils::validateOperationInputs($name, $x, $y);
         $loss = $x->subtract($y, name: $name)->abs(name: $name);
@@ -62,14 +62,14 @@ class Losses
      * @param float $epsilon
      * @param string|null $reduction
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public static function BinaryCrossEntropy(int|float|array|object $x,
                                               int|float|array|object $y,
                                               float                  $epsilon = 1e-15,
                                               ?string                $reduction = 'mean',
-                                              string                 $name = ''): Variable
+                                              string                 $name = ''): Tensor
     {
         [$x, $y] = ValidationUtils::validateOperationInputs($name, $x, $y);
         $loss = ($y->getArray() - 1) *
@@ -77,9 +77,10 @@ class Losses
             $y->getArray() *
             nd::maximum(nd::log($x->getArray()), (nd::ones($x->getShape()) * -100));
 
-        $new_var = new Variable($loss);
         if (isset($reduction) && $reduction != '') {
-            $new_var = new Variable(nd::{$reduction}($loss));
+            $new_var = new Tensor(nd::{$reduction}($loss));
+        } else {
+            $new_var = new Tensor($loss);
         }
         $new_var->registerOperation('binary_cross_entropy', [$x, $y, $epsilon, $reduction])->setName($name);
         return $new_var;

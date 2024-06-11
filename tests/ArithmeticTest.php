@@ -4,20 +4,20 @@ namespace NumPower\Tensor\Tests;
 
 use Exception;
 use NumPower\Tensor\Core\Math\Arithmetics;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Arithmetics::class)]
-#[CoversClass(Variable::class)]
-#[UsesClass(Variable::class)]
+#[CoversClass(Tensor::class)]
+#[UsesClass(Tensor::class)]
 class ArithmeticTest extends TestCase
 {
     /**
-     * @var Variable
+     * @var Tensor
      */
-    private Variable $a;
+    private Tensor $a;
 
     /**
      * @param string $name
@@ -25,7 +25,7 @@ class ArithmeticTest extends TestCase
      */
     public function __construct(string $name)
     {
-        $this->a = new Variable([[1, 2, 3], [4, 5, 6]]);
+        $this->a = new Tensor([[1, 2, 3], [4, 5, 6]]);
         parent::__construct($name);
     }
 

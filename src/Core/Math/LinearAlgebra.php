@@ -5,7 +5,7 @@ namespace NumPower\Tensor\Core\Math;
 use NDArray as nd;
 use Exception;
 use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 
 trait LinearAlgebra
 {
@@ -17,37 +17,37 @@ trait LinearAlgebra
     /**
      * @param int|float|array|object $value
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function matmul(int|float|array|object $value, string $name = ''): Variable
+    public function matmul(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Variable(nd::matmul($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::matmul($this->getArray(), $input->getArray()));
         $output->registerOperation("matmul", [$this, $input])->setName($name, $this);
         return $output;
     }
 
     /**
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function matrix_rank(string $name = ''): Variable
+    public function matrix_rank(string $name = ''): Tensor
     {
-        $new_var = new Variable(nd::matrix_rank($this->getArray()));
+        $new_var = new Tensor(nd::matrix_rank($this->getArray()));
         $new_var->registerOperation("matrix_rank", [$this])->setName($name);
         return $new_var;
     }
 
     /**
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function det(string $name = ''): Variable
+    public function det(string $name = ''): Tensor
     {
-        $new_var = new Variable(nd::det($this->getArray()));
+        $new_var = new Tensor(nd::det($this->getArray()));
         $new_var->registerOperation("det", [$this])->setName($name);
         return $new_var;
     }
@@ -55,16 +55,16 @@ trait LinearAlgebra
     /**
      * @param int|float|array|object $y
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function dot(int|float|array|object $y, string $name = ''): Variable
+    public function dot(int|float|array|object $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         if (count($this->getShape()) != 1 || count($input->getShape()) != 1) {
             throw new Exception("dot operation can only compute the dot product of two 1D tensors.");
         }
-        $new_var = new Variable(nd::dot($this->getArray(), $input->getArray()));
+        $new_var = new Tensor(nd::dot($this->getArray(), $input->getArray()));
         $new_var->registerOperation("dot", [$this, $input]);
         $new_var->setName($name);
         return $new_var;
@@ -73,14 +73,50 @@ trait LinearAlgebra
     /**
      * @param int|float|array|object $vec2
      * @param string $name
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function outer(int|float|array|object $vec2, string $name = ''): Variable
+    public function outer(int|float|array|object $vec2, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $vec2)[0];
-        $output = new Variable(nd::outer(nd::flatten($this->getArray()), nd::flatten($input->getArray())));
+        $output = new Tensor(nd::outer(nd::flatten($this->getArray()), nd::flatten($input->getArray())));
         $output->registerOperation("outer", [$this, $input]);
         return $output;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function cond(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::cond($this->getArray()));
+        $new_var->registerOperation("cond", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function svd(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::svd($this->getArray()));
+        $new_var->registerOperation("svd", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function norm(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::norm($this->getArray()));
+        $new_var->registerOperation("norm", [$this])->setName($name, $this);
+        return $new_var;
     }
 }

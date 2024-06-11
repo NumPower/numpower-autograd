@@ -10,9 +10,10 @@ use NumPower\Tensor\Core\Math\Arithmetics;
 use NumPower\Tensor\Core\Math\ExponentsLog;
 use NumPower\Tensor\Core\Math\Hyperbolics;
 use NumPower\Tensor\Core\Math\LinearAlgebra;
+use NumPower\Tensor\Core\Math\Rounding;
 use NumPower\Tensor\Core\Math\Trigonometrics;
 use NumPower\Tensor\Core\Tape\GradientTape;
-use NumPower\Tensor\Variable;
+use NumPower\Tensor\Tensor;
 
 abstract class Operand extends ArithmeticOperand implements ArrayAccess
 {
@@ -20,7 +21,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
         ExponentsLog,
         Hyperbolics,
         Trigonometrics,
-        LinearAlgebra;
+        LinearAlgebra,
+        Rounding;
 
     /**
      * @var mixed
@@ -40,7 +42,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     /**
      * @var GradientTape
      */
-    protected GradientTape $tape;
+    protected ?GradientTape $tape;
 
     /**
      * @var bool
@@ -54,7 +56,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __add(int|float|array|object $b) {
@@ -63,7 +65,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __mul(int|float|array|object $b) {
@@ -72,7 +74,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __pow(int|float|array|object $b) {
@@ -81,7 +83,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __div(int|float|array|object $b) {
@@ -90,7 +92,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __sub(int|float|array|object $b) {
@@ -99,7 +101,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param int|float|array|object $b
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function __mod(int|float|array|object $b) {
@@ -112,12 +114,17 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      * @param OperationContext|null $context
      * @return $this
      */
-    public function registerOperation(string $name, array $args, ?OperationContext $context = null): Variable
+    public function registerOperation(string $name, array $args, ?OperationContext $context = null): Tensor
     {
         if (!isset($this->tape)) {
             $this->tape = new GradientTape($name, $args, $context);
         }
         return $this;
+    }
+
+    public function resetGradients(): void
+    {
+        $this->tape = null;
     }
 
     /**
@@ -173,7 +180,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      * @param nd|float|int $array
      * @return $this
      */
-    protected function setArray(\NDArray|float|int $array): Variable
+    protected function setArray(\NDArray|float|int $array): Tensor
     {
         $this->array = $array;
         return $this;
@@ -237,10 +244,10 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param string $name
-     * @param Variable|null $origin
+     * @param Tensor|null $origin
      * @return $this
      */
-    public function setName(string $name, ?Variable $origin = null): Variable
+    public function setName(string $name, ?Tensor $origin = null): Tensor
     {
         if ($name == '' && $origin != null) {
             $name = $origin->getName();
@@ -252,27 +259,27 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     /**
      * @param callable $operation
      * @param ...$args
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
-    public function operation(callable $operation, ...$args): Variable
+    public function operation(callable $operation, ...$args): Tensor
     {
         $context = new OperationContext('custom_operation');
         $forward_args = [];
         foreach ($args as $idx => $arg) {
-            if (is_a($arg, Variable::class)) {
+            if (is_a($arg, Tensor::class)) {
                 $forward_args[] = $arg->getArray();
                 continue;
             }
             $forward_args[] = $arg;
         }
-        // @var Variable $result
+        // @var Tensor $result
         $result = $operation($context, $this->getArray(), ...$forward_args);
-        if (!is_a($result, Variable::class) && !is_a($result, \NDArray::class)) {
+        if (!is_a($result, Tensor::class) && !is_a($result, \NDArray::class)) {
             throw new Exception("Invalid return for operation `".$context->getName()."`.");
         }
         if (is_a($result, \NDArray::class)) {
-            $result = new Variable($result);
+            $result = new Tensor($result);
         }
         $result->registerOperation($context->getName(), array_merge([$this], $args), $context)->setName('out_'.$context->getName());
         return $result;
@@ -280,13 +287,13 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     /**
      * @param mixed $offset
-     * @return Variable
+     * @return Tensor
      * @throws Exception
      */
     public function offsetGet(mixed $offset): mixed
     {
         $view = $this->getArray()[$offset];
-        $output = new Variable($view);
+        $output = new Tensor($view);
         $output->registerOperation('offsetGet', [$this, $offset])->setName('out_'.$offset.'_offset', $this);
         return $output;
     }
@@ -328,5 +335,79 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
             return 1;
         }
         return $this->getArray()->size();
+    }
+
+    /**
+     * @param array $shape
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function reshape(array $shape, string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::reshape($this->getArray(), $shape));
+        $new_var->registerOperation("reshape", [$this, $shape])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function rsqrt(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::rsqrt($this->getArray()));
+        $new_var->registerOperation("rsqrt", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function mean(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::average($this->getArray()));
+        $new_var->registerOperation("mean", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function abs(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::abs($this->getArray()));
+        $new_var->registerOperation("abs", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function sqrt(string $name = ''): Tensor
+    {
+        $new_var = new Tensor(nd::sqrt($this->getArray()));
+        $new_var->registerOperation("sqrt", [$this])->setName($name, $this);
+        return $new_var;
+    }
+
+    /**
+     * @param string $name
+     * @return Tensor
+     * @throws Exception
+     */
+    public function sigmoid(string $name = ''): Tensor
+    {
+        $ones = new Tensor(1);
+        $output = $ones->divide($this->multiply(-1, name: $name)->exp(name: $name)->add($ones, name: $name), name: $name);
+        $output->setName($name, $this);
+        return $output;
     }
 }
