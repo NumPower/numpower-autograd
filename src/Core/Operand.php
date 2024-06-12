@@ -37,9 +37,9 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     protected nd|float $array;
 
     /**
-     * @var nd|float
+     * @var nd|float|null
      */
-    protected nd|float $grad;
+    protected nd|float|null $grad;
 
     /**
      * @var GradientTape
@@ -126,6 +126,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
 
     public function resetGradients(): void
     {
+        $this->grad = null;
         $this->tape = null;
     }
 
@@ -159,15 +160,15 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
-     * @return nd
+     * @return Tensor
      * @throws Exception
      */
-    public function grad(): \NDArray|float
+    public function grad(): Tensor
     {
         if (!isset($this->grad)){
             throw new Exception("No gradient found for `$this->name`.");
         }
-        return $this->grad;
+        return new Tensor($this->grad);
     }
 
     /**
@@ -358,5 +359,22 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
         $new_var = new Tensor(nd::reshape($this->getArray(), $shape), requireGrad: $this->requireGrad());
         $new_var->registerOperation("reshape", [$this, $shape])->setName($name, $this);
         return $new_var;
+    }
+
+    /**
+     * @return array|float
+     */
+    public function toArray(): array|float
+    {
+        return $this->getArray()->toArray();
+    }
+
+    /**
+     * @return Tensor
+     * @throws Exception
+     */
+    public function detach(): Tensor
+    {
+        return new Tensor($this->array);
     }
 }

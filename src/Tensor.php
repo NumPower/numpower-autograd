@@ -19,6 +19,9 @@ final class Tensor extends Operand
         if (!is_a($value, '\NDArray')) {
             $value = nd::array($value);
         }
+        if (is_a($value, '\NumPower\Core\Operand')) {
+
+        }
         $this->setArray($value);
         $this->requireGrad = $requireGrad;
         $this->setName($name);
@@ -29,11 +32,8 @@ final class Tensor extends Operand
      *
      * @return array|float
      */
-    public function getValue(): array|float
+    public function getData(): \NDArray
     {
-        if (is_a($this->getArray(), \NDArray::class)) {
-            return $this->getArray()->toArray();
-        }
         return $this->getArray();
     }
 
@@ -46,12 +46,14 @@ final class Tensor extends Operand
     }
 
     /**
-     * @param nd|float $value
+     * @param nd|float|Tensor $value
      * @return void
      */
-    public function setValue(\NDArray|float $value): void
+    public function setData(\NDArray|float|Tensor $value): void
     {
+        if (is_a($value, Tensor::class)) {
+            $value = $value->getData();
+        }
         $this->setArray($value);
-        $this->resetGradients();
     }
 }

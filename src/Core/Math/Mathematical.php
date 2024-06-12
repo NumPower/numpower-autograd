@@ -2,6 +2,7 @@
 
 namespace NumPower\Core\Math;
 
+use NDArray as nd;
 use Exception;
 use NumPower\Tensor;
 
