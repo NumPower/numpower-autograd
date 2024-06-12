@@ -1,5 +1,9 @@
 {
   "name": "numpower/autograd",
+  "type": "library",
+  "license": "MIT",
+  "description": "High-performance math library with automatic differentiation and GPU support.",
+  "homepage": "https://www.numpower.org",
   "scripts": {
     "phpstan": "vendor/bin/phpstan -c phpstan.neon"
   },
