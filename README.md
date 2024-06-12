@@ -29,18 +29,18 @@ $ composer require numpower/autograd
 ```
 ## Getting Started
 
-The `NumPower\Tensor\Variable` class is a type of N-dimensional array with support for automatic differentiation. 
+The `NumPower\Tensor` class is a type of N-dimensional array with support for automatic differentiation. 
 It uses the NDArray object from the NumPower extension as its engine, retaining many of the 
 flexibilities of using an NDArray, such as using it as an operator in arimetic operations, 
 simplifying code reading.
 
 ```php 
-use NumPower\Tensor\Variable;
+use NumPower\Tensor;
 
-$a = new Variable([[1, 2], [3, 4]]);
-$b = new Variable([[5, 6], [7, 8]]);
+$a = new Tensor([[1, 2], [3, 4]], requireGrad: True);
+$b = new Tensor([[5, 6], [7, 8]], requireGrad: True);
 
-$c = ($a + $b) / $b;
+$c = (($a + $b) / $b)->sum();
 
 $c->backward();
 
@@ -76,10 +76,10 @@ whether your Variable is in RAM or VRAM and will perform the
 appropriate operation on the correct device.
 
 ```php
-$a_gpu = $a->gpu();
-$b_gpu = $b->gpu();
+$a = new Tensor([[1, 2], [3, 4]], requireGrad: True, useGpu: True);
+$b = new Tensor([[5, 6], [7, 8]], requireGrad: True, useGpu: True);
 
-$c = $a + $b; // (Addition is performed on GPU)
+$c = ($a + $b)->sum(); // (Addition is performed on GPU)
 
 $c->backward(); // Back propagation is performed on GPU
 
@@ -91,71 +91,73 @@ $a = $a_gpu->cpu(); // Copy data back to CPU
 Here we can see a more practical example. Let's create a neural network 
 with a hidden layer and 1 output layer. Some common Neural Network 
 functions are ready-made and can be accessed statically through 
-the `NumPower\Tensor\NeuralNetwork` module.
+the `NumPower\NeuralNetwork` module.
 
 
 
 ```php 
 use NDArray as nd;
-use NumPower\Tensor\Variable;
-use NumPower\Tensor\NeuralNetwork as nn;
-use NumPower\Tensor\NeuralNetwork\Losses as loss;
+use NumPower\Tensor;
+use NumPower\NeuralNetwork\Activations as activation;
+use NumPower\NeuralNetwork\Losses as loss;
 
 class SimpleModel
 {
-    public Variable $weights_hidden_layer;
-    public Variable $weights_output_layer;
-    public Variable $hidden_bias;
-    public Variable $output_bias;
+    public Tensor $weights_hidden_layer;
+    public Tensor $weights_output_layer;
+    public Tensor $hidden_bias;
+    public Tensor $output_bias;
     private float $learningRate;
 
     public function __construct(int $inputDim = 2,
                                 int $outputDim = 1,
                                 int $hiddenSize = 16,
-                                float $learningRate = 0.001
+                                float $learningRate = 0.01
     )
     {
         $this->learningRate = $learningRate;
         // Initialize hidden layer weights
-        $this->weights_hidden_layer = new Variable(
+        $this->weights_hidden_layer = new Tensor(
             nd::uniform([$inputDim, $hiddenSize], -0.5, 0.5),
-            name: 'weights_hidden_layer'
+            name: 'weights_hidden_layer',
+            requireGrad: True
         );
         // Initialize output layer weights
-        $this->weights_output_layer = new Variable(
+        $this->weights_output_layer = new Tensor(
             nd::uniform([$hiddenSize, $outputDim],-0.5, 0.5),
-            name: 'weights_output_layer'
+            name: 'weights_output_layer',
+            requireGrad: True
         );
         // Initialize hidden layer bias
-        $this->hidden_bias = new Variable(
+        $this->hidden_bias = new Tensor(
             nd::uniform([$hiddenSize],  -0.5, 0.5),
-            name: 'hidden_bias'
+            name: 'hidden_bias',
+            requireGrad: True
         );
         // Initialize output layer bias
-        $this->output_bias = new Variable(
+        $this->output_bias = new Tensor(
             nd::uniform([$outputDim], -0.5, 0.5),
-            name: 'output_bias'
+            name: 'output_bias',
+            requireGrad: True
         );
     }
-    
-    public function forward(Variable $x, Variable $y): array
+
+    public function forward(Tensor $x, Tensor $y): array
     {
         // Forward pass - Hidden Layer
-        $x = $x->matmul($this->weights_hidden_layer, name: 'hidden_matmul'); // Hidden Layer
-        $x = $x->add($this->hidden_bias, name: 'add_bias_hidden'); // Add Bias
-        $x = nn::SiLU($x, name: 'selu_activation'); // seLU Activation
+        $x = $x->matmul($this->weights_hidden_layer) + $this->hidden_bias;
+        $x = activation::ReLU($x); // ReLU Activation
 
         // Forward pass - Output Layer
-        $x = $x->matmul($this->weights_output_layer, name: 'output_matmul');  // Output Layer
-        $x = $x->add($this->output_bias, name: 'add_bias_output'); // Add Bias
-        $x = $x->sigmoid(name: 'output_sigmoid'); // Sigmoid Activation
+        $x = $x->matmul($this->weights_output_layer) + $this->output_bias;
+        $x = activation::sigmoid($x); // Sigmoid Activation
 
         // Mean Squared Error
         $loss = loss::MeanSquaredError($x, $y, name: 'loss');
         return [$x, $loss];
     }
 
-    public function backward(Variable $loss)
+    public function backward(Tensor $loss)
     {
         // Trigger autograd
         $loss->backward();
@@ -163,20 +165,20 @@ class SimpleModel
         // SGD (Optimizer) - Update Hidden Layer weights and bias
         $dw_dLoss = $this->weights_hidden_layer->grad();
 
-        $new_hidden_weights = $this->weights_hidden_layer->getArray() - ($dw_dLoss * $this->learningRate);
-        $this->weights_hidden_layer->setArray($new_hidden_weights);
+        $this->weights_hidden_layer -= ($dw_dLoss * $this->learningRate);
+        $this->weights_hidden_layer->resetGradients();
 
-        $new_hidden_bias = $this->hidden_bias->getArray() - ($this->hidden_bias->grad() * $this->learningRate);
-        $this->hidden_bias->setArray($new_hidden_bias);
+        $this->hidden_bias -= ($this->hidden_bias->grad() * $this->learningRate);
+        $this->hidden_bias->resetGradients();
 
         // SGD (Optimizer) - Update Output Layer weights and bias
         $db_dLoss = $this->weights_output_layer->grad();
 
-        $new_output_weights = $this->weights_output_layer->getArray() - ($db_dLoss * $this->learningRate);
-        $this->weights_output_layer->setArray($new_output_weights);
+        $this->weights_output_layer -= ($db_dLoss * $this->learningRate);
+        $this->weights_output_layer->resetGradients();
 
-        $new_output_bias = $this->output_bias->getArray() - ($this->output_bias->grad() * $this->learningRate);
-        $this->output_bias->setArray($new_output_bias);
+        $this->output_bias -= $this->output_bias - ($this->output_bias->grad() * $this->learningRate);
+        $this->output_bias->resetGradients();
     }
 }
 ```
@@ -203,23 +205,4 @@ for ($current_epoch = 0; $current_epoch < $num_epochs; $current_epoch++) {
     $model->backward($loss);
     echo "\n Epoch ($current_epoch): ".$loss->getArray();
 }
-```
-
-## Creating custom operations
-Sometimes you want to create specific operations that are not natively implemented in the library. In this case you can use the `operation` method to specify an operation and a backward propagation function for that operation.
-
-``` php
-// Custom operation function
-function myop(OperationContext $context, ...$args): Variable
-{
-   $context->setName('myop');
-   // Custom operation backward function
-   $context->setBackwardFunction(
-       function(Variable $output, \NDArray $grad, Variable $a, Variable $b) {
-            $a->backward($grad * $a->getArray());
-       }
-   );
-}
-
-$a->operation(myop, $b);
 ```
