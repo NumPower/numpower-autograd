@@ -49,15 +49,14 @@ $dc_Db = $b->grad();
 
 echo "out: \n";
 echo $c;
-echo "dc_Da: \n";
+echo "\ndc_Da: \n";
 echo $dc_Da;
 echo "dc_Db: \n";
 echo $dc_Db;
 ```
 ```php
 out: 
-[[1.2, 1.33333]
- [1.42857, 1.5]]
+5.4619045257568
 dc_Da: 
 [[0.2, 0.166667]
  [0.142857, 0.125]]
