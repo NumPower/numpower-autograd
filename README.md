@@ -206,5 +206,5 @@ for ($current_epoch = 0; $current_epoch < $num_epochs; $current_epoch++) {
 }
 
 echo "\nPredicted:\n";
-print_r($model->forward($x, $y)[0]->getArray());
+print_r($model->forward($x, $y)[0]->toArray());
 ```
