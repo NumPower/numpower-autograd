@@ -81,8 +81,6 @@ $b = new Tensor([[5, 6], [7, 8]], requireGrad: True, useGpu: True);
 $c = ($a + $b)->sum(); // (Addition is performed on GPU)
 
 $c->backward(); // Back propagation is performed on GPU
-
-$a = $a_gpu->cpu(); // Copy data back to CPU
 ```
 > `Tensor` works exactly the same as `NDArray` when dealing with different devices in multi-argument operations. Unless the argument is a scalar, all N-dimensional arguments of an operation must be stored on the same device.
 
