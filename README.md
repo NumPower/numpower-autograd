@@ -84,7 +84,7 @@ $c->backward(); // Back propagation is performed on GPU
 
 $a = $a_gpu->cpu(); // Copy data back to CPU
 ```
-> `Variable` works exactly the same as `NDArray` when dealing with different devices in multi-argument operations. Unless the argument is a scalar, all N-dimensional arguments of an operation must be stored on the same device.
+> `Tesnor` works exactly the same as `NDArray` when dealing with different devices in multi-argument operations. Unless the argument is a scalar, all N-dimensional arguments of an operation must be stored on the same device.
 
 ## Simple training with autograd
 Here we can see a more practical example. Let's create a neural network 
@@ -191,8 +191,8 @@ For simplicity, let's see if our model can solve the XOR problem.
 
 ```php 
 $num_epochs = 200;
-$x = new Variable(nd::array([[0, 0], [1, 0], [1, 1], [0, 1]]), name: 'x');
-$y = new Variable(nd::array([[1], [0], [1], [0]]), name: 'y');
+$x = new Tensor(nd::array([[0, 0], [1, 0], [1, 1], [0, 1]]), name: 'x');
+$y = new Tensor(nd::array([[1], [0], [1], [0]]), name: 'y');
 
 $model = new SimpleModel();
 
