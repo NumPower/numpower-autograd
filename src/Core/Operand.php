@@ -353,7 +353,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function reshape(array $shape, string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::reshape($this->getArray(), $shape));
+        $new_var = new Tensor(nd::reshape($this->getArray(), $shape), requireGrad: $this->requireGrad());
         $new_var->registerOperation("reshape", [$this, $shape])->setName($name, $this);
         return $new_var;
     }
@@ -365,7 +365,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function rsqrt(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::rsqrt($this->getArray()));
+        $new_var = new Tensor(nd::rsqrt($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("rsqrt", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -389,7 +389,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function abs(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::abs($this->getArray()));
+        $new_var = new Tensor(nd::abs($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("abs", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -401,7 +401,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function sqrt(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::sqrt($this->getArray()));
+        $new_var = new Tensor(nd::sqrt($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("sqrt", [$this])->setName($name, $this);
         return $new_var;
     }
