@@ -70,8 +70,8 @@ the gradients of the result of a computation (**$c**) with respect to its inputs
 ## Using a video card with CUDA support
 If you have compiled the NumPower extension with GPU utilization 
 capabilities, you can perform operations on the GPU by allocating 
-your Variable in VRAM. The operations will automatically identify 
-whether your Variable is in RAM or VRAM and will perform the 
+your `Tensor` in VRAM. The operations will automatically identify 
+whether your `Tensor` is in RAM or VRAM and will perform the 
 appropriate operation on the correct device.
 
 ```php
@@ -84,7 +84,7 @@ $c->backward(); // Back propagation is performed on GPU
 
 $a = $a_gpu->cpu(); // Copy data back to CPU
 ```
-> `Tesnor` works exactly the same as `NDArray` when dealing with different devices in multi-argument operations. Unless the argument is a scalar, all N-dimensional arguments of an operation must be stored on the same device.
+> `Tensor` works exactly the same as `NDArray` when dealing with different devices in multi-argument operations. Unless the argument is a scalar, all N-dimensional arguments of an operation must be stored on the same device.
 
 ## Simple training with autograd
 Here we can see a more practical example. Let's create a neural network 
