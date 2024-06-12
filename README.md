@@ -190,7 +190,7 @@ The above model can be used for several different classification problems.
 For simplicity, let's see if our model can solve the XOR problem.
 
 ```php 
-$num_epochs = 200;
+$num_epochs = 4000;
 $x = new Tensor(nd::array([[0, 0], [1, 0], [1, 1], [0, 1]]), name: 'x');
 $y = new Tensor(nd::array([[1], [0], [1], [0]]), name: 'y');
 
@@ -204,4 +204,7 @@ for ($current_epoch = 0; $current_epoch < $num_epochs; $current_epoch++) {
     $model->backward($loss);
     echo "\n Epoch ($current_epoch): ".$loss->getArray();
 }
+
+echo "\nPredicted:\n";
+print_r($model->forward($x, $y)[0]->getArray());
 ```
