@@ -16,7 +16,7 @@
     "phpunit/php-code-coverage": ">=11.0.3"
   },
   "require": {
-    "ext-numpower": "*",
+    "ext-numpower": ">=0.5.0",
     "ext-gd": "*"
   },
   "minimum-stability": "stable",
