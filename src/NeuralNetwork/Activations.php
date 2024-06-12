@@ -1,11 +1,11 @@
 <?php
 
-namespace NumPower\Tensor\NeuralNetwork;
+namespace NumPower\NeuralNetwork;
 
 use Exception;
 use \NDArray as nd;
-use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Tensor;
+use NumPower\Utils\ValidationUtils;
+use NumPower\Tensor;
 
 class Activations
 {
@@ -17,7 +17,7 @@ class Activations
      */
     public static function ReLU(Tensor $inputs, string $name = 'out_relu'): Tensor
     {
-        $new_var = new Tensor($inputs->getArray() * nd::greater($inputs->getArray(), 0));
+        $new_var = new Tensor($inputs->getArray() * nd::greater($inputs->getArray(), 0), requireGrad: $inputs->requireGrad());
         $new_var->registerOperation("relu", [$inputs])->setName($name);
         return $new_var;
     }
@@ -36,7 +36,7 @@ class Activations
         $zeros = nd::less_equal($inputs->getArray(), 0);
         $non_zero = $non_zero * $inputs->getArray();
         $zeros = $zeros * ($alpha * (nd::exp($inputs->getArray()) - 1));
-        $new_var = new Tensor($scale * ($non_zero + $zeros));
+        $new_var = new Tensor($scale * ($non_zero + $zeros), requireGrad: $inputs->requireGrad());
         $new_var->registerOperation("selu", [$inputs, $alpha, $scale])->setName($name);
         return $new_var;
     }
@@ -53,7 +53,7 @@ class Activations
                                 string                 $name = 'out_celu'): Tensor
     {
         [$x] = ValidationUtils::validateOperationInputs($name, $x);
-        $loss = new Tensor(nd::maximum(0, $x->getArray()) + nd::minimum(0, $alpha * (nd::exp($x->getArray() / $alpha) - 1)));
+        $loss = new Tensor(nd::maximum(0, $x->getArray()) + nd::minimum(0, $alpha * (nd::exp($x->getArray() / $alpha) - 1)), requireGrad: $x->requireGrad());
         $loss->registerOperation('celu', [$x, $alpha])->setName($name);
         return $loss;
     }

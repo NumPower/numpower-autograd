@@ -1,11 +1,11 @@
 <?php
 
-namespace NumPower\Tensor\Core\Tape;
+namespace NumPower\Core\Tape;
 
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Core\OperationContext;
-use NumPower\Tensor\Tensor;
+use NumPower\Core\OperationContext;
+use NumPower\Tensor;
 
 class GradientTape
 {

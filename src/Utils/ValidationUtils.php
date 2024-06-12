@@ -1,10 +1,10 @@
 <?php
 
-namespace NumPower\Tensor\Utils;
+namespace NumPower\Utils;
 
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Tensor;
+use NumPower\Tensor;
 
 class ValidationUtils
 {

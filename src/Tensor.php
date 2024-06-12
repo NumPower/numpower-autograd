@@ -1,17 +1,17 @@
 <?php
 
-namespace NumPower\Tensor;
+namespace NumPower;
 use ArithmeticOperand;
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Core\Operand;
+use NumPower\Core\Operand;
 
 final class Tensor extends Operand
 {
     /**
      * @throws Exception
      */
-    public function __construct(int|float|array|object $value, string $name = "", bool $requireGrad = true)
+    public function __construct(int|float|array|object $value, string $name = "", bool $requireGrad = false)
     {
         if (is_int($value) || is_float($value) && $name == '') {
             $name = $value;

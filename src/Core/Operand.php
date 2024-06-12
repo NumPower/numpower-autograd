@@ -1,19 +1,19 @@
 <?php
 
-namespace NumPower\Tensor\Core;
+namespace NumPower\Core;
 
 use \ArithmeticOperand;
 use ArrayAccess;
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Core\Math\Arithmetics;
-use NumPower\Tensor\Core\Math\ExponentsLog;
-use NumPower\Tensor\Core\Math\Hyperbolics;
-use NumPower\Tensor\Core\Math\LinearAlgebra;
-use NumPower\Tensor\Core\Math\Rounding;
-use NumPower\Tensor\Core\Math\Trigonometrics;
-use NumPower\Tensor\Core\Tape\GradientTape;
-use NumPower\Tensor\Tensor;
+use NumPower\Core\Math\Arithmetics;
+use NumPower\Core\Math\ExponentsLog;
+use NumPower\Core\Math\Hyperbolics;
+use NumPower\Core\Math\LinearAlgebra;
+use NumPower\Core\Math\Rounding;
+use NumPower\Core\Math\Trigonometrics;
+use NumPower\Core\Tape\GradientTape;
+use NumPower\Tensor;
 
 abstract class Operand extends ArithmeticOperand implements ArrayAccess
 {
@@ -184,6 +184,14 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     {
         $this->array = $array;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function requireGrad(): bool
+    {
+        return $this->requireGrad;
     }
 
     /**
@@ -369,7 +377,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function mean(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::average($this->getArray()));
+        $new_var = new Tensor(nd::average($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("mean", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -405,7 +413,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function sigmoid(string $name = ''): Tensor
     {
-        $ones = new Tensor(1);
+        $ones = new Tensor(1, requireGrad: $this->requireGrad());
         $output = $ones->divide($this->multiply(-1, name: $name)->exp(name: $name)->add($ones, name: $name), name: $name);
         $output->setName($name, $this);
         return $output;

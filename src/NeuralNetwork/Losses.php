@@ -1,10 +1,10 @@
 <?php
 
-namespace NumPower\Tensor\NeuralNetwork;
+namespace NumPower\NeuralNetwork;
 
 use Exception;
-use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Tensor;
+use NumPower\Utils\ValidationUtils;
+use NumPower\Tensor;
 use NDArray as nd;
 
 class Losses
@@ -78,9 +78,9 @@ class Losses
             nd::maximum(nd::log($x->getArray()), (nd::ones($x->getShape()) * -100));
 
         if (isset($reduction) && $reduction != '') {
-            $new_var = new Tensor(nd::{$reduction}($loss));
+            $new_var = new Tensor(nd::{$reduction}($loss), requireGrad: $x->requireGrad());
         } else {
-            $new_var = new Tensor($loss);
+            $new_var = new Tensor($loss, requireGrad: $x->requireGrad());
         }
         $new_var->registerOperation('binary_cross_entropy', [$x, $y, $epsilon, $reduction])->setName($name);
         return $new_var;

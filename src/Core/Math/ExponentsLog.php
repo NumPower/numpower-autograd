@@ -1,10 +1,10 @@
 <?php
 
-namespace NumPower\Tensor\Core\Math;
+namespace NumPower\Core\Math;
 
 use NDArray as nd;
 use Exception;
-use NumPower\Tensor\Tensor;
+use NumPower\Tensor;
 
 trait ExponentsLog
 {
@@ -14,13 +14,18 @@ trait ExponentsLog
     abstract public function getArray(): \NDArray|float|int;
 
     /**
+     * @return bool
+     */
+    abstract public function requireGrad(): bool;
+
+    /**
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
     public function exp(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::exp($this->getArray()));
+        $new_var = new Tensor(nd::exp($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("exp", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -32,7 +37,7 @@ trait ExponentsLog
      */
     public function exp2(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::exp2($this->getArray()));
+        $new_var = new Tensor(nd::exp2($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("exp2", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -44,7 +49,7 @@ trait ExponentsLog
      */
     public function expm1(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::expm1($this->getArray()));
+        $new_var = new Tensor(nd::expm1($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("expm1", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -56,7 +61,7 @@ trait ExponentsLog
      */
     public function log(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::log($this->getArray()));
+        $new_var = new Tensor(nd::log($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("log", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -68,7 +73,7 @@ trait ExponentsLog
      */
     public function log1p(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::log1p($this->getArray()));
+        $new_var = new Tensor(nd::log1p($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("log1p", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -80,7 +85,7 @@ trait ExponentsLog
      */
     public function log2(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::log2($this->getArray()));
+        $new_var = new Tensor(nd::log2($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("log2", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -92,7 +97,7 @@ trait ExponentsLog
      */
     public function log10(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::log10($this->getArray()));
+        $new_var = new Tensor(nd::log10($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("log10", [$this])->setName($name, $this);
         return $new_var;
     }

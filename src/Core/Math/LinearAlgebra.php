@@ -1,11 +1,11 @@
 <?php
 
-namespace NumPower\Tensor\Core\Math;
+namespace NumPower\Core\Math;
 
 use NDArray as nd;
 use Exception;
-use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Tensor;
+use NumPower\Utils\ValidationUtils;
+use NumPower\Tensor;
 
 trait LinearAlgebra
 {
@@ -13,6 +13,11 @@ trait LinearAlgebra
      * @return \NDArray|float|int
      */
     abstract public function getArray(): \NDArray|float|int;
+
+    /**
+     * @return bool
+     */
+    abstract public function requireGrad(): bool;
 
     /**
      * @param int|float|array|object $value
@@ -23,7 +28,7 @@ trait LinearAlgebra
     public function matmul(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Tensor(nd::matmul($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::matmul($this->getArray(), $input->getArray()), requireGrad:($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("matmul", [$this, $input])->setName($name, $this);
         return $output;
     }
@@ -35,7 +40,7 @@ trait LinearAlgebra
      */
     public function matrix_rank(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::matrix_rank($this->getArray()));
+        $new_var = new Tensor(nd::matrix_rank($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("matrix_rank", [$this])->setName($name);
         return $new_var;
     }
@@ -47,7 +52,7 @@ trait LinearAlgebra
      */
     public function det(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::det($this->getArray()));
+        $new_var = new Tensor(nd::det($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("det", [$this])->setName($name);
         return $new_var;
     }
@@ -64,7 +69,7 @@ trait LinearAlgebra
         if (count($this->getShape()) != 1 || count($input->getShape()) != 1) {
             throw new Exception("dot operation can only compute the dot product of two 1D tensors.");
         }
-        $new_var = new Tensor(nd::dot($this->getArray(), $input->getArray()));
+        $new_var = new Tensor(nd::dot($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $new_var->registerOperation("dot", [$this, $input]);
         $new_var->setName($name);
         return $new_var;
@@ -79,7 +84,7 @@ trait LinearAlgebra
     public function outer(int|float|array|object $vec2, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $vec2)[0];
-        $output = new Tensor(nd::outer(nd::flatten($this->getArray()), nd::flatten($input->getArray())));
+        $output = new Tensor(nd::outer(nd::flatten($this->getArray()), nd::flatten($input->getArray())), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("outer", [$this, $input]);
         return $output;
     }
@@ -91,7 +96,7 @@ trait LinearAlgebra
      */
     public function cond(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::cond($this->getArray()));
+        $new_var = new Tensor(nd::cond($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("cond", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -103,7 +108,7 @@ trait LinearAlgebra
      */
     public function svd(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::svd($this->getArray()));
+        $new_var = new Tensor(nd::svd($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("svd", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -115,7 +120,7 @@ trait LinearAlgebra
      */
     public function norm(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::norm($this->getArray()));
+        $new_var = new Tensor(nd::norm($this->getArray()), requireGrad: $this->requireGrad());
         $new_var->registerOperation("norm", [$this])->setName($name, $this);
         return $new_var;
     }

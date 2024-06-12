@@ -1,10 +1,10 @@
 <?php
 
-namespace NumPower\Tensor\Core\Math;
+namespace NumPower\Core\Math;
 
 use Exception;
-use NumPower\Tensor\Utils\ValidationUtils;
-use NumPower\Tensor\Tensor;
+use NumPower\Utils\ValidationUtils;
+use NumPower\Tensor;
 use NDArray as nd;
 
 trait Arithmetics
@@ -15,12 +15,17 @@ trait Arithmetics
     abstract public function getArray(): \NDArray|float|int;
 
     /**
+     * @return bool
+     */
+    abstract public function requireGrad(): bool;
+
+    /**
      * @throws Exception
      */
     public function add(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Tensor(nd::add($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::add($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("add", [$this, $input]);
         $output->setName($name, $this);
         return $output;
@@ -35,7 +40,7 @@ trait Arithmetics
     public function divide(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Tensor(nd::divide($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::divide($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("divide", [$this, $input])->setName($name, $this);
         return $output;
     }
@@ -49,7 +54,7 @@ trait Arithmetics
     public function multiply(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Tensor(nd::multiply($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::multiply($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("multiply", [$this, $input])->setName($name, $this);
         return $output;
     }
@@ -63,7 +68,7 @@ trait Arithmetics
     public function power(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $new_var = new Tensor($this->getArray() ** $input->getArray());
+        $new_var = new Tensor($this->getArray() ** $input->getArray(), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $new_var->registerOperation("power", [$this, $input])->setName($name, $this);
         return $new_var;
     }
@@ -77,7 +82,7 @@ trait Arithmetics
     public function mod(int|float|array|object $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
-        $new_var = new Tensor(nd::mod($this->getArray(), $input->getArray()));
+        $new_var = new Tensor(nd::mod($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $new_var->registerOperation("mod", [$this, $input])->setName($name, $this);
         return $new_var;
     }
@@ -89,7 +94,7 @@ trait Arithmetics
      */
     public function negative(string $name = ''): Tensor
     {
-        $new_var = new Tensor(nd::negative($this->getArray()));
+        $new_var = new Tensor(nd::negative($this->getArray()), requireGrad: ($this->requireGrad()));
         $new_var->registerOperation("negative", [$this])->setName($name, $this);
         return $new_var;
     }
@@ -103,7 +108,7 @@ trait Arithmetics
     public function subtract(int|float|array|object $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
-        $output = new Tensor(nd::subtract($this->getArray(), $input->getArray()));
+        $output = new Tensor(nd::subtract($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
         $output->registerOperation("subtract", [$this, $input])->setName($name, $this);
         return $output;
     }
@@ -124,7 +129,7 @@ trait Arithmetics
                 $value = $value[0] * nd::ones($this->getArray()->shape());
             }
         }
-        $new_var = new Tensor($value);
+        $new_var = new Tensor($value, requireGrad: $this->requireGrad());
         $new_var->registerOperation("sum", [$this, $keepdim])->setName($name, $this);
         return $new_var;
     }
@@ -147,7 +152,7 @@ trait Arithmetics
                 $value = nd::reshape($value, [count($value), 1]);
             }
         }
-        $new_var = new Tensor($value);
+        $new_var = new Tensor($value, requireGrad: $this->requireGrad());
         $new_var->registerOperation("sum_axis", [$this, $axis, $keepdim])->setName($name, $this);
         return $new_var;
     }

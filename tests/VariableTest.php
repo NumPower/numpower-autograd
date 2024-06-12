@@ -1,5 +1,5 @@
 <?php
-namespace NumPower\Tensor\Tests;
+namespace NumPower\Autograd\Tests;
 
 use Exception;
 use NumPower\Tensor\Core\Operand;

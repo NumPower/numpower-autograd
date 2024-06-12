@@ -1,10 +1,10 @@
 <?php
 
-namespace NumPower\Tensor\Core\Tape;
+namespace NumPower\Core\Tape;
 
 use Exception;
 use NDArray as nd;
-use NumPower\Tensor\Tensor;
+use NumPower\Tensor;
 
 /**
  * Core backward functions.
@@ -90,15 +90,15 @@ class BackwardOperation
      * @param Tensor $output
      * @param nd|float $grad
      * @param Tensor $a
-     * @param Tensor $min
-     * @param Tensor $max
+     * @param float $min
+     * @param float $max
      * @return void
      * @throws Exception
      */
-    public static function clip(Tensor $output, \NDArray|float $grad, Tensor $a, Tensor $min, Tensor $max): void
+    public static function clip(Tensor $output, \NDArray|float $grad, Tensor $a, float $min, float $max): void
     {
-        $greater = nd::greater_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $min->getArray());
-        $less = nd::less_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $max->getArray());
+        $greater = nd::greater_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $min);
+        $less = nd::less_equal($a->getArray(), nd::ones($a->getArray()->shape()) * $max);
         $a->diff($grad * $greater * $less);
     }
 

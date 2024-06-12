@@ -5,8 +5,8 @@
   },
   "autoload": {
     "psr-4": {
-      "NumPower\\Tensor\\": "src/",
-      "NumPower\\Tensor\\Tests": "tests/"
+      "NumPower\\": "src/",
+      "NumPower\\Autograd\\Tests\\": "tests/"
     }
   },
   "require-dev": {

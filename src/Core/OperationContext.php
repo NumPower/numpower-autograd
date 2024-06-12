@@ -1,6 +1,6 @@
 <?php
 
-namespace NumPower\Tensor\Core;
+namespace NumPower\Core;
 
 class OperationContext
 {
