@@ -237,7 +237,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     public function backward(\NDArray|float|int $grad = null, $benchmark = False)
     {
         if ($this->isScalar() == false) {
-            throw new Exception("grad can be created only for scalar outputs");
+            throw new Exception("grad can only be created for scalar outputs");
         }
         return $this->diff($grad);
     }
