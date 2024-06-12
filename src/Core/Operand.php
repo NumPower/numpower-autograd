@@ -285,10 +285,10 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
         }
         // @var Tensor $result
         $result = $operation($context, $this->getArray(), ...$forward_args);
-        if (!is_a($result, Tensor::class) && !is_a($result, \NDArray::class)) {
+        if (!is_a($result, Tensor::class) && !is_a($result, \NDArray::class) && !is_scalar($result)) {
             throw new Exception("Invalid return for operation `".$context->getName()."`.");
         }
-        if (is_a($result, \NDArray::class)) {
+        if (is_a($result, \NDArray::class) || is_scalar($result)) {
             $result = new Tensor($result);
         }
         $result->registerOperation($context->getName(), array_merge([$this], $args), $context)->setName('out_'.$context->getName());
