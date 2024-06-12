@@ -2,7 +2,7 @@
 
 namespace NumPower\Core;
 
-use \ArithmeticOperand;
+use ArithmeticOperand;
 use ArrayAccess;
 use Exception;
 use NDArray as nd;
@@ -10,6 +10,7 @@ use NumPower\Core\Math\Arithmetics;
 use NumPower\Core\Math\ExponentsLog;
 use NumPower\Core\Math\Hyperbolics;
 use NumPower\Core\Math\LinearAlgebra;
+use NumPower\Core\Math\Mathematical;
 use NumPower\Core\Math\Rounding;
 use NumPower\Core\Math\Trigonometrics;
 use NumPower\Core\Tape\GradientTape;
@@ -17,7 +18,8 @@ use NumPower\Tensor;
 
 abstract class Operand extends ArithmeticOperand implements ArrayAccess
 {
-    use Arithmetics,
+    use Mathematical,
+        Arithmetics,
         ExponentsLog,
         Hyperbolics,
         Trigonometrics,
@@ -30,14 +32,14 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     private string $name = "";
 
     /**
-     * @var \NDArray
+     * @var nd|float
      */
-    protected \NDArray|float $array;
+    protected nd|float $array;
 
     /**
-     * @var nd
+     * @var nd|float
      */
-    protected \NDArray|float $grad;
+    protected nd|float $grad;
 
     /**
      * @var GradientTape
@@ -356,66 +358,5 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
         $new_var = new Tensor(nd::reshape($this->getArray(), $shape), requireGrad: $this->requireGrad());
         $new_var->registerOperation("reshape", [$this, $shape])->setName($name, $this);
         return $new_var;
-    }
-
-    /**
-     * @param string $name
-     * @return Tensor
-     * @throws Exception
-     */
-    public function rsqrt(string $name = ''): Tensor
-    {
-        $new_var = new Tensor(nd::rsqrt($this->getArray()), requireGrad: $this->requireGrad());
-        $new_var->registerOperation("rsqrt", [$this])->setName($name, $this);
-        return $new_var;
-    }
-
-    /**
-     * @param string $name
-     * @return Tensor
-     * @throws Exception
-     */
-    public function mean(string $name = ''): Tensor
-    {
-        $new_var = new Tensor(nd::average($this->getArray()), requireGrad: $this->requireGrad());
-        $new_var->registerOperation("mean", [$this])->setName($name, $this);
-        return $new_var;
-    }
-
-    /**
-     * @param string $name
-     * @return Tensor
-     * @throws Exception
-     */
-    public function abs(string $name = ''): Tensor
-    {
-        $new_var = new Tensor(nd::abs($this->getArray()), requireGrad: $this->requireGrad());
-        $new_var->registerOperation("abs", [$this])->setName($name, $this);
-        return $new_var;
-    }
-
-    /**
-     * @param string $name
-     * @return Tensor
-     * @throws Exception
-     */
-    public function sqrt(string $name = ''): Tensor
-    {
-        $new_var = new Tensor(nd::sqrt($this->getArray()), requireGrad: $this->requireGrad());
-        $new_var->registerOperation("sqrt", [$this])->setName($name, $this);
-        return $new_var;
-    }
-
-    /**
-     * @param string $name
-     * @return Tensor
-     * @throws Exception
-     */
-    public function sigmoid(string $name = ''): Tensor
-    {
-        $ones = new Tensor(1, requireGrad: $this->requireGrad());
-        $output = $ones->divide($this->multiply(-1, name: $name)->exp(name: $name)->add($ones, name: $name), name: $name);
-        $output->setName($name, $this);
-        return $output;
     }
 }
