@@ -17,7 +17,10 @@ class Activations
      */
     public static function ReLU(Tensor $inputs, string $name = 'out_relu'): Tensor
     {
-        $new_var = new Tensor($inputs->getArray() * nd::greater($inputs->getArray(), 0), requireGrad: $inputs->requireGrad());
+        $new_var = new Tensor(
+            $inputs->getArray() * nd::greater($inputs->getArray(), 0),
+            requireGrad: $inputs->requireGrad()
+        );
         $new_var->registerOperation("relu", [$inputs])->setName($name);
         return $new_var;
     }

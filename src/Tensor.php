@@ -11,7 +11,11 @@ final class Tensor extends Operand
     /**
      * @throws Exception
      */
-    public function __construct(int|float|array|object $value, string $name = "", bool $requireGrad = false)
+    public function __construct(int|float|array|object $value,
+                                string $name = "",
+                                bool $requireGrad = false,
+                                bool $useGpu = false
+    )
     {
         if (is_int($value) || is_float($value) && $name == '') {
             $name = $value;
@@ -19,8 +23,8 @@ final class Tensor extends Operand
         if (!is_a($value, '\NDArray')) {
             $value = nd::array($value);
         }
-        if (is_a($value, '\NumPower\Core\Operand')) {
-
+        if ($useGpu && (is_a($value, '\NDArray') && !$value->isGPU())) {
+            $value = $value->gpu();
         }
         $this->setArray($value);
         $this->requireGrad = $requireGrad;
@@ -55,5 +59,17 @@ final class Tensor extends Operand
             $value = $value->getData();
         }
         $this->setArray($value);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGPU(): bool
+    {
+        $value = $this->getArray();
+        if (is_scalar($value)) {
+            return false;
+        }
+        return $value->isGPU();
     }
 }
