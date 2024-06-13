@@ -22,7 +22,7 @@ trait Arithmetics
     /**
      * @throws Exception
      */
-    public function add(int|float|array|object $value, string $name = ''): Tensor
+    public function add(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Tensor(nd::add($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
@@ -32,12 +32,12 @@ trait Arithmetics
     }
 
     /**
-     * @param int|float|array|object $value
+     * @param int|float|array|\NDArray|Tensor $value
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function divide(int|float|array|object $value, string $name = ''): Tensor
+    public function divide(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Tensor(nd::divide($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
@@ -46,12 +46,12 @@ trait Arithmetics
     }
 
     /**
-     * @param int|float|array|object $value
+     * @param int|float|array|\NDArray|Tensor $value
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function multiply(int|float|array|object $value, string $name = ''): Tensor
+    public function multiply(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Tensor(nd::multiply($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
@@ -60,12 +60,12 @@ trait Arithmetics
     }
 
     /**
-     * @param int|float|array|object $value
+     * @param int|float|array|\NDArray|Tensor $value
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function power(int|float|array|object $value, string $name = ''): Tensor
+    public function power(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $new_var = new Tensor($this->getArray() ** $input->getArray(), requireGrad: ($this->requireGrad() || $input->requireGrad()));
@@ -74,12 +74,12 @@ trait Arithmetics
     }
 
     /**
-     * @param int|float|array|object $y
+     * @param int|float|array|\NDArray|Tensor $y
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function mod(int|float|array|object $y, string $name = ''): Tensor
+    public function mod(int|float|array|\NDArray|Tensor $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         $new_var = new Tensor(nd::mod($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));
@@ -100,12 +100,12 @@ trait Arithmetics
     }
 
     /**
-     * @param int|float|array|object $value
+     * @param int|float|array|\NDArray|Tensor $value
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function subtract(int|float|array|object $value, string $name = ''): Tensor
+    public function subtract(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Tensor(nd::subtract($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));

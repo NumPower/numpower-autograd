@@ -20,12 +20,12 @@ trait LinearAlgebra
     abstract public function requireGrad(): bool;
 
     /**
-     * @param int|float|array|object $value
+     * @param int|float|array|\NDArray|Tensor $value
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function matmul(int|float|array|object $value, string $name = ''): Tensor
+    public function matmul(int|float|array|\NDArray|Tensor $value, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $value)[0];
         $output = new Tensor(nd::matmul($this->getArray(), $input->getArray()), requireGrad:($this->requireGrad() || $input->requireGrad()));
@@ -58,12 +58,12 @@ trait LinearAlgebra
     }
 
     /**
-     * @param int|float|array|object $y
+     * @param int|float|array|\NDArray|Tensor $y
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function dot(int|float|array|object $y, string $name = ''): Tensor
+    public function dot(int|float|array|\NDArray|Tensor $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         if (count($this->getShape()) != 1 || count($input->getShape()) != 1) {
@@ -76,12 +76,12 @@ trait LinearAlgebra
     }
 
     /**
-     * @param int|float|array|object $vec2
+     * @param int|float|array|\NDArray|Tensor $vec2
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function outer(int|float|array|object $vec2, string $name = ''): Tensor
+    public function outer(int|float|array|\NDArray|Tensor $vec2, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $vec2)[0];
         $output = new Tensor(nd::outer(nd::flatten($this->getArray()), nd::flatten($input->getArray())), requireGrad: ($this->requireGrad() || $input->requireGrad()));

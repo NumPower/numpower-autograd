@@ -10,15 +10,15 @@ use NDArray as nd;
 class Losses
 {
     /**
-     * @param int|float|array|object $x
-     * @param int|float|array|object $y
+     * @param int|float|array|\NDArray|Tensor $x
+     * @param int|float|array|\NDArray|Tensor $y
      * @param string|null $reduction
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public static function MeanSquaredError(int|float|array|object $x,
-                                            int|float|array|object $y,
+    public static function MeanSquaredError(int|float|array|\NDArray|Tensor $x,
+                                            int|float|array|\NDArray|Tensor $y,
                                             ?string                $reduction = 'mean',
                                             string                 $name = ''): Tensor
     {
@@ -32,15 +32,15 @@ class Losses
     }
 
     /**
-     * @param int|float|array|object $x
-     * @param int|float|array|object $y
+     * @param int|float|array|\NDArray|Tensor $x
+     * @param int|float|array|\NDArray|Tensor $y
      * @param string|null $reduction
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public static function MeanAbsoluteError(int|float|array|object $x,
-                                             int|float|array|object $y,
+    public static function MeanAbsoluteError(int|float|array|\NDArray|Tensor $x,
+                                             int|float|array|\NDArray|Tensor $y,
                                              ?string                $reduction = 'mean',
                                              string                 $name = ''): Tensor
     {
@@ -57,16 +57,16 @@ class Losses
 
 
     /**
-     * @param int|float|array|object $x
-     * @param int|float|array|object $y
+     * @param int|float|array|\NDArray|Tensor $x
+     * @param int|float|array|\NDArray|Tensor $y
      * @param float $epsilon
      * @param string|null $reduction
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public static function BinaryCrossEntropy(int|float|array|object $x,
-                                              int|float|array|object $y,
+    public static function BinaryCrossEntropy(int|float|array|\NDArray|Tensor $x,
+                                              int|float|array|\NDArray|Tensor $y,
                                               float                  $epsilon = 1e-15,
                                               ?string                $reduction = 'mean',
                                               string                 $name = ''): Tensor
