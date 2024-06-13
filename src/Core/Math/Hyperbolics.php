@@ -15,6 +15,11 @@ trait Hyperbolics
     abstract public function getArray(): \NDArray|float|int;
 
     /**
+     * @return bool
+     */
+    abstract public function requireGrad(): bool;
+
+    /**
      * @param string $name
      * @return Tensor
      * @throws Exception
