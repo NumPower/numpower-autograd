@@ -160,6 +160,10 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * This attribute is NULL by default and becomes a Tensor the first time a call to backward()
+     * computes gradients for self. The attribute will then contain the gradients computed and
+     * future calls to backward() will accumulate (add) gradients into it.
+     *
      * @return Tensor
      * @throws Exception
      */
@@ -172,6 +176,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Returns the shape of the Tensor or 0 if the Tensor is a scalar.
+     *
      * @return array|int
      */
     public function getShape(): array|int
@@ -205,7 +211,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      * @return void
      * @throws Exception
      */
-    public function diff(\NDArray|float|int $grad = null)
+    public function diff(\NDArray|float|int $grad = null): void
     {
         if (!isset($grad)) {
             if (!is_float($this->getArray()) && !is_int($this->getArray())) {
@@ -225,6 +231,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Returns true if the tensor is a scalar or false if it is an n-dimensional array.
+     *
      * @return bool
      */
     public function isScalar(): bool
@@ -233,19 +241,23 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Computes the gradient of current tensor graph leaves.
+     *
      * @param nd|float|int|null $grad
      * @return void
      * @throws Exception
      */
-    public function backward(\NDArray|float|int $grad = null, $benchmark = False)
+    public function backward(\NDArray|float|int $grad = null): void
     {
-        if ($this->isScalar() == false) {
+        if (!$this->isScalar()) {
             throw new Exception("grad can only be created for scalar outputs");
         }
-        return $this->diff($grad);
+        $this->diff($grad);
     }
 
     /**
+     * Print the Tensor graph
+     *
      * @throws Exception
      */
     public function graph(): void
@@ -341,6 +353,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Returns the total number of elements in the tensor.
+     *
      * @return int
      */
     public function numElements(): int
@@ -352,6 +366,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Gives a new shape to an array without changing its data.
+     *
      * @param array $shape
      * @param string $name
      * @return Tensor
@@ -365,6 +381,8 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Converts the buffer data to a PHP object, array or scalar.
+     *
      * @return array|float
      */
     public function toArray(): array|float
@@ -373,6 +391,9 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
+     * Returns a new Tensor, detached from the current graph.
+     * The result will never require gradient.
+     *
      * @return Tensor
      * @throws Exception
      */
