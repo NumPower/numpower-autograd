@@ -92,12 +92,12 @@ trait Hyperbolics
     }
 
     /**
-     * @param int|float|array|object $y
+     * @param int|float|array|nd|Tensor $y
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public function arctan2(int|float|array|object $y, string $name = ''): Tensor
+    public function arctan2(int|float|array|\NDArray|Tensor $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
         $new_var = new Tensor(nd::arctan2($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));

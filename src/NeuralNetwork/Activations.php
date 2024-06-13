@@ -10,13 +10,14 @@ use NumPower\Tensor;
 class Activations
 {
     /**
-     * @param Tensor $inputs
+     * @param int|float|array|nd|Tensor $inputs
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public static function ReLU(Tensor $inputs, string $name = 'out_relu'): Tensor
+    public static function ReLU(int|float|array|\NDArray|Tensor $inputs, string $name = 'out_relu'): Tensor
     {
+        [$inputs] = ValidationUtils::validateOperationInputs($name, $inputs);
         $new_var = new Tensor(
             $inputs->getArray() * nd::greater($inputs->getArray(), 0),
             requireGrad: $inputs->requireGrad()
@@ -26,15 +27,16 @@ class Activations
     }
 
     /**
-     * @param Tensor $inputs
+     * @param int|float|array|nd|Tensor $inputs
      * @param float $alpha
      * @param float $scale
      * @param string $name
      * @return Tensor
      * @throws Exception
      */
-    public static function SELU(Tensor $inputs, float $alpha=1.67326, float $scale=1.0507, string $name = 'out_selu'): Tensor
+    public static function SELU(int|float|array|\NDArray|Tensor $inputs, float $alpha=1.67326, float $scale=1.0507, string $name = 'out_selu'): Tensor
     {
+        [$inputs] = ValidationUtils::validateOperationInputs($name, $inputs);
         $non_zero = nd::greater($inputs->getArray(), 0);
         $zeros = nd::less_equal($inputs->getArray(), 0);
         $non_zero = $non_zero * $inputs->getArray();

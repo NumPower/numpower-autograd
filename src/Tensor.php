@@ -32,11 +32,9 @@ final class Tensor extends Operand
     }
 
     /**
-     * Return a PHP value.
-     *
-     * @return array|float
+     * @return nd|float
      */
-    public function getData(): \NDArray
+    public function getData(): \NDArray|float
     {
         return $this->getArray();
     }

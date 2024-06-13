@@ -172,10 +172,13 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     }
 
     /**
-     * @return array
+     * @return array|int
      */
-    public function getShape(): array
+    public function getShape(): array|int
     {
+        if (is_scalar($this->getArray())) {
+            return 0;
+        }
         return $this->getArray()->shape();
     }
 
@@ -224,9 +227,9 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     /**
      * @return bool
      */
-    public function isScalar()
+    public function isScalar(): bool
     {
-        return is_float($this->array);
+        return is_scalar($this->getArray());
     }
 
     /**
