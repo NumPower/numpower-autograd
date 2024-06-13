@@ -149,8 +149,8 @@ class SimpleModel
         $x = $x->matmul($this->weights_output_layer) + $this->output_bias;
         $x = activation::sigmoid($x); // Sigmoid Activation
 
-        // Mean Squared Error
-        $loss = loss::MeanSquaredError($x, $y, name: 'loss');
+        // Binary Cross Entropy Loss
+        $loss = loss::BinaryCrossEntropy($x, $y, name: 'loss');
         return [$x, $loss];
     }
 
