@@ -190,7 +190,7 @@ For simplicity, let's see if our model can solve the XOR problem.
 ```php 
 $num_epochs = 4000;
 $x = new Tensor(nd::array([[0, 0], [1, 0], [1, 1], [0, 1]]), name: 'x');
-$y = new Tensor(nd::array([[1], [0], [1], [0]]), name: 'y');
+$y = new Tensor(nd::array([[0], [1], [0], [1]]), name: 'y');
 
 $model = new SimpleModel();
 
