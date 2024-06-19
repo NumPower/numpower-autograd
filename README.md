@@ -174,7 +174,7 @@ class SimpleModel
         $this->weights_output_layer -= ($db_dLoss * $this->learningRate);
         $this->weights_output_layer->resetGradients();
 
-        $this->output_bias -= $this->output_bias - ($this->output_bias->grad() * $this->learningRate);
+        $this->output_bias -= $this->output_bias->grad() * $this->learningRate;
         $this->output_bias->resetGradients();
     }
 }
@@ -194,7 +194,6 @@ $y = new Tensor(nd::array([[0], [1], [0], [1]]), name: 'y');
 
 $model = new SimpleModel();
 
-$start = microtime(true);
 for ($current_epoch = 0; $current_epoch < $num_epochs; $current_epoch++) {
     // Forward Pass
     [$prediction, $loss] = $model->forward($x, $y);
