@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Utils;
 
 use Exception;
@@ -17,7 +19,7 @@ class ValidationUtils
         $outputs = [];
         foreach ($args as $arg) {
             if (is_array($arg) || is_a($arg, "\gdImage") || is_int($arg) || is_float($arg)) {
-                $outputs[] = new Tensor(nd::array($arg), name: $arg);
+                $outputs[] = new Tensor(nd::array($arg), name: (string)$arg);
                 continue;
             }
             if (is_a($arg, "\NDArray")) {

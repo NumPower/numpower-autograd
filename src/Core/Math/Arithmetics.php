@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core\Math;
 
 use Exception;
@@ -125,7 +127,7 @@ trait Arithmetics
         if ($keepdim) {
             if (is_float($value)) {
                 $value = nd::ones($this->getArray()->shape()) * $value;
-            } elseif (count($value->shape()) == 1 && count($value) == 1) {
+            } elseif (count($value->shape()) === 1 && count($value) === 1) {
                 $value = $value[0] * nd::ones($this->getArray()->shape());
             }
         }
@@ -145,10 +147,10 @@ trait Arithmetics
     {
         $value = nd::sum($this->getArray(), $axis);
         if ($keepdim) {
-            if (count($value->shape()) == 1 && count($value) == 1) {
+            if (count($value->shape()) === 1 && count($value) === 1) {
                 $value = $value[0] * nd::ones($this->getArray()->shape());
             }
-            if (count($value->shape()) == 1 && count($this->getArray()->shape()) == 2) {
+            if (count($value->shape()) === 1 && count($this->getArray()->shape()) === 2) {
                 $value = nd::reshape($value, [count($value), 1]);
             }
         }

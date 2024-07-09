@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower;
 use ArithmeticOperand;
 use Exception;
 use NDArray as nd;
 use NumPower\Core\Operand;
 
-final class Tensor extends Operand
+class Tensor extends Operand
 {
     /**
      * @throws Exception
@@ -17,7 +19,10 @@ final class Tensor extends Operand
                                 bool $useGpu = false
     )
     {
-        if (is_int($value) || is_float($value) && $name == '') {
+        if (is_a($value, Tensor::class)) {
+            return $value->detach();
+        }
+        if (is_int($value) || is_float($value) && $name === '') {
             $name = $value;
         }
         if (!is_a($value, '\NDArray')) {
@@ -28,7 +33,7 @@ final class Tensor extends Operand
         }
         $this->setArray($value);
         $this->requireGrad = $requireGrad;
-        $this->setName($name);
+        $this->setName((string)$name);
     }
 
     /**
@@ -44,7 +49,7 @@ final class Tensor extends Operand
      */
     public function __toString(): string
     {
-        return $this->getArray();
+        return $this->getArray()->__toString();
     }
 
     /**
@@ -69,5 +74,13 @@ final class Tensor extends Operand
             return false;
         }
         return $value->isGPU();
+    }
+
+    /**
+     * Make sure $this->array is freed
+     */
+    public function __destruct()
+    {
+        unset($this->array);
     }
 }

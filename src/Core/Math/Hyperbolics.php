@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core\Math;
 
 use \NDArray as nd;

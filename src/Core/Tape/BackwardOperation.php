@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core\Tape;
 
 use Exception;
@@ -551,7 +553,7 @@ class BackwardOperation
         switch($reduction) {
             case 'mean':
                 $result = $grad * ($x->getArray() - $y->getArray()) / nd::clip($x->getArray() * (1 - $x->getArray()), $epsilon, PHP_FLOAT_MAX);
-                $result = $result / $x->numElements();
+                $result /= $x->numElements();
                 $grad_target = -(nd::log($x->getArray() / (1 - $x->getArray())));
                 $x->diff($result);
                 $y->diff($grad_target);
@@ -633,7 +635,7 @@ class BackwardOperation
         $dL_dy_pred = -($true->getArray() / $pred_batch);
         $dL_dy_true = -nd::log($pred->getArray());
 
-        $dL_dy_pred = $dL_dy_pred / count($true->getShape());
+        $dL_dy_pred /= count($true->getShape());
         $pred->diff($grad * $dL_dy_true);
         $true->diff($grad * $dL_dy_pred);
     }
