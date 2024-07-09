@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\NeuralNetwork;
 
 use Exception;
@@ -39,7 +41,7 @@ class Activations
         [$inputs] = ValidationUtils::validateOperationInputs($name, $inputs);
         $non_zero = nd::greater($inputs->getArray(), 0);
         $zeros = nd::less_equal($inputs->getArray(), 0);
-        $non_zero = $non_zero * $inputs->getArray();
+        $non_zero *= $inputs->getArray();
         $zeros = $zeros * ($alpha * (nd::exp($inputs->getArray()) - 1));
         $new_var = new Tensor($scale * ($non_zero + $zeros), requireGrad: $inputs->requireGrad());
         $new_var->registerOperation("selu", [$inputs, $alpha, $scale])->setName($name);
@@ -75,11 +77,10 @@ class Activations
                                 string $name = 'out_silu'): Tensor
     {
         [$x, $beta] = ValidationUtils::validateOperationInputs($name, $x, $beta);
-        $loss = $beta->multiply($x, name: $name)
+        return $beta->multiply($x, name: $name)
             ->sigmoid(name: $name)
             ->multiply($x, name: $name)
             ->setName($name, $x);
-        return $loss;
     }
 
     /**

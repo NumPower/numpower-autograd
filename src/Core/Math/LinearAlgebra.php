@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core\Math;
 
 use NDArray as nd;
@@ -66,7 +68,7 @@ trait LinearAlgebra
     public function dot(int|float|array|\NDArray|Tensor $y, string $name = ''): Tensor
     {
         $input = ValidationUtils::validateOperationInputs($name, $y)[0];
-        if (count($this->getShape()) != 1 || count($input->getShape()) != 1) {
+        if (count($this->getShape()) !== 1 || count($input->getShape()) !== 1) {
             throw new Exception("dot operation can only compute the dot product of two 1D tensors.");
         }
         $new_var = new Tensor(nd::dot($this->getArray(), $input->getArray()), requireGrad: ($this->requireGrad() || $input->requireGrad()));

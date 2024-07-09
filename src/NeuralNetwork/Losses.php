@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\NeuralNetwork;
 
 use Exception;
@@ -24,7 +26,7 @@ class Losses
     {
         [$x, $y] = ValidationUtils::validateOperationInputs($name, $x, $y);
         $loss = $x->subtract($y, name: $name)->power(2, name: $name);
-        if (isset($reduction) && $reduction != '') {
+        if (isset($reduction) && $reduction !== '') {
             $loss = $loss->{$reduction}(name: $name);
         }
         $loss->setName($name);
@@ -47,7 +49,7 @@ class Losses
         [$x, $y] = ValidationUtils::validateOperationInputs($name, $x, $y);
         $loss = $x->subtract($y, name: $name)->abs(name: $name);
 
-        if (isset($reduction) && $reduction != '') {
+        if (isset($reduction) && $reduction !== '') {
             $loss = $loss->{$reduction}();
         }
 
@@ -77,7 +79,7 @@ class Losses
             $y->getArray() *
             nd::maximum(nd::log($x->getArray()), (nd::ones($x->getShape()) * -100));
 
-        if (isset($reduction) && $reduction != '') {
+        if (isset($reduction) && $reduction !== '') {
             $new_var = new Tensor(nd::{$reduction}($loss), requireGrad: $x->requireGrad());
         } else {
             $new_var = new Tensor($loss, requireGrad: $x->requireGrad());

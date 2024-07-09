@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core;
 
 use ArithmeticOperand;
@@ -170,7 +172,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     public function grad(): Tensor
     {
         if (!isset($this->grad)){
-            throw new Exception("No gradient found for `$this->name`.");
+            throw new Exception("No gradient found for `". $this->name ."`.");
         }
         return new Tensor($this->grad);
     }
@@ -211,7 +213,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      * @return void
      * @throws Exception
      */
-    public function diff(\NDArray|float|int $grad = null): void
+    public function diff(\NDArray|float|int|null $grad = null): void
     {
         if (!isset($grad)) {
             if (!is_float($this->getArray()) && !is_int($this->getArray())) {
@@ -247,7 +249,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      * @return void
      * @throws Exception
      */
-    public function backward(\NDArray|float|int $grad = null): void
+    public function backward(\NDArray|float|int|null $grad = null): void
     {
         if (!$this->isScalar()) {
             throw new Exception("grad can only be created for scalar outputs");
@@ -275,7 +277,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function setName(string $name, ?Tensor $origin = null): Tensor
     {
-        if ($name == '' && $origin != null) {
+        if ($name === '' && $origin !== null) {
             $name = $origin->getName();
         }
         $this->name = $name;
@@ -292,7 +294,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
     {
         $context = new OperationContext('custom_operation');
         $forward_args = [];
-        foreach ($args as $idx => $arg) {
+        foreach ($args as $arg) {
             if (is_a($arg, Tensor::class)) {
                 $forward_args[] = $arg->getArray();
                 continue;
@@ -349,7 +351,7 @@ abstract class Operand extends ArithmeticOperand implements ArrayAccess
      */
     public function offsetExists(mixed $offset): bool
     {
-        return (count($this->getArray()) > $offset);
+        return count($this->getArray()) > $offset;
     }
 
     /**

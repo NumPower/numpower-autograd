@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NumPower\Core\Tape;
 
 use Exception;
@@ -83,7 +85,7 @@ class GradientTape
             return;
         }
         if (!method_exists(BackwardOperation::class, $this->name)) {
-            throw new Exception("Impossible to compute gradient of `$this->name`");
+            throw new Exception("Impossible to compute gradient of `". $this->name ."`");
         }
         BackwardOperation::{$this->name}($tensor, $grad, ...$this->getArgs());
     }
@@ -99,7 +101,7 @@ class GradientTape
         foreach ($this->getArgs() as $arg) {
             if (is_a($arg, Tensor::class)) {
                 $name = $arg->getName();
-                if ($name == '') {
+                if ($name === '') {
                     $name = '_nd_';
                 }
                 $names[] = $name;
@@ -119,7 +121,7 @@ class GradientTape
         foreach ($this->getArgs() as $arg) {
             if (is_a($arg, Tensor::class)) {
                 $tape = $arg->getTape();
-                if ($tape == null) {
+                if ($tape === null) {
                     continue;
                 }
                 $tape->backwardPrint($arg, false);
